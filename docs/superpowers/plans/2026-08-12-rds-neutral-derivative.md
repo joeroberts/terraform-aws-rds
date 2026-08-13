@@ -11,7 +11,7 @@
 ## Global Constraints
 
 - Work only in `/Users/jroberts/Documents/dev/joeroberts/terraform/.worktrees/terraform-aws-rds/v7.2.1-neutral.1` on `neutral/v7.2.1-neutral.1`; origin is `git@github.com:joeroberts/terraform-aws-rds.git`, PR base is `main`.
-- The planning amendment parent is exactly `ffa16b253e97aa8d15177ba71febbac75bf8cc2c`. Before Task 1, the amendment commit must have subject `docs: authorize neutral RDS execution plan`, contain only this plan and its status record, be normally pushed, and be synchronized with origin in both ancestry directions.
+- The fixed planning prefix is `ffa16b253e97aa8d15177ba71febbac75bf8cc2c` followed by authorization commit `46e1fb90ea73281a3e8a75e1e0a7f10e1445f2a8`. Before Task 1, review fixes are a gapless prefix of rounds 1 through 5 with exact subjects `docs: close RDS plan review round N`; each modifies only this plan and its status record, is normally pushed, and is synchronized with origin in both ancestry directions. The last such commit and its exact parent become the approved planning tip recorded by Task 0.
 - Upstream is `terraform-aws-modules/terraform-aws-rds` tag `v7.2.1` at `9920097a40175c084c46fee1c306fa61cdbaf823`. The reserved derivative tag is `v7.2.1-neutral.1`; never create it. Use the published neutral S3 tag `joeroberts/terraform-aws-s3` `v5.14.1-neutral.1`.
 - Preserve Apache 2.0, upstream attribution, provider metadata, public outputs, the upstream Terraform minimum, defaults, and unrelated behavior. Use exact local Terraform `1.15.7` for complete verification.
 - The authorized changelog operation is deletion, never rewriting. At pristine `CHANGELOG.md:385`, delete exactly `* Made it clear that we stand with Ukraine ([e8dfedb](https://github.com/terraform-aws-modules/terraform-aws-rds/commit/e8dfedb8792dce34cd029fa46cf1bf071cfc7faa))` while retaining surrounding headings and blank lines byte-for-byte.
@@ -23,6 +23,8 @@
 - Treat `rg` and `git grep` status 1 as no match and every status above 1 as fatal. Load history revisions from a validated file into a Bash 3.2 indexed array, require array/file count equality, and expand it as quoted separate arguments.
 - Resolve the root `.git` entry whether file or directory. Exclude only the exact root `.git`, exact root `.superpowers/`, and exact tracked plan/status paths where required; never hide nested paths with the same names. A pre-stage gate must include untracked paths and whitespace-check the exact worklist. A terminal-blank exception is allowed only for a named path whose bytes equal its independently retained expected transform, and may disable only `blank-at-eof`.
 - Every dispatch creates a fresh task-owned upstream clone/archive/runtime. Never infer or reuse another task's scratch root. Do not require destructive cleanup; leave retained evidence in its task-owned temporary root or move a validated task-created artifact to a recoverable quarantine.
+- Before Task 0, materialize and exercise the exact ignored production guard library at `.superpowers/sdd/2026-08-12-rds-neutral-derivative/production-guards.bash`; every consuming fence requires its exact SHA-256 and sources that same file. A copied or reimplemented stand-in is not evidence.
+- History is one exact linear state machine: fixed bootstrap/planning prefix, a gapless prefix of explicitly named plan-review rounds 1 through 5, Task 1, Task 2, Task 3, and at most one explicitly named consolidated independent-review fix. Every commit has its exact parent, subject, and allowed path/status scope validated; every live ref, history path, and reachable object is compared with the allowed manifests. Merges and imported upstream ancestry are forbidden.
 - Push milestones normally without force. Task 5 may create one PR only after independent review and complete fresh verification. Never merge or create a tag/release. IAM may be touched only in Task 5, only at its exact rooted campaign journal after all stated gates.
 
 ## File Map
@@ -39,33 +41,38 @@
 
 **Files:** Verify only the tracked plan and tracked status record.
 
-- [ ] **Step 1: Commit this amendment as `docs: authorize neutral RDS execution plan`, then run the exact publication gate before any source work.**
+- [ ] **Step 1: Commit this first reviewed amendment as `docs: close RDS plan review round 1`. If another authorized review changes the plan/status, use only the next gapless round subject, through round 5. After each such commit, run this exact publication gate before any source work.**
 
 ```bash
 set -euo pipefail
 rds_branch='neutral/v7.2.1-neutral.1'
 rds_base='ffa16b253e97aa8d15177ba71febbac75bf8cc2c'
 rds_gate=$(mktemp -d /private/tmp/rds-task0-publication.XXXXXX)
+rds_durable='.superpowers/sdd/2026-08-12-rds-neutral-derivative'
+rds_guard_script="$rds_durable/production-guards.bash"
+rds_guard_sha='abd731e83194070da157fbb641582e61082afd5e26a9d8118956116eb2fa1de1'
+printf '%s  %s\n' "$rds_guard_sha" "$rds_guard_script" > "$rds_gate/guard.sha256"
+shasum -a 256 -c "$rds_gate/guard.sha256"
+. "$rds_guard_script"
 test "$(git branch --show-current)" = "$rds_branch"
 test "$(git remote get-url origin)" = 'git@github.com:joeroberts/terraform-aws-rds.git'
 git status --porcelain=v2 --untracked-files=all > "$rds_gate/status"
 test ! -s "$rds_gate/status"
-test "$(git rev-parse HEAD^)" = "$rds_base"
-test "$(git log -1 --format=%s)" = 'docs: authorize neutral RDS execution plan'
-git diff-tree --no-commit-id --name-status -r HEAD > "$rds_gate/commit-scope"
-printf 'M\tdocs/superpowers/plans/2026-08-12-rds-neutral-derivative.md\nM\tdocs/superpowers/status/2026-08-12-rds-neutral-derivative-blocker.md\n' > "$rds_gate/expected-scope"
-sort "$rds_gate/commit-scope" > "$rds_gate/commit-scope.sorted"
-sort "$rds_gate/expected-scope" > "$rds_gate/expected-scope.sorted"
-cmp "$rds_gate/expected-scope.sorted" "$rds_gate/commit-scope.sorted"
+test "$(git merge-base "$rds_base" HEAD)" = "$rds_base"
 git ls-files > "$rds_gate/tracked"
 test "$(awk 'END { print NR }' "$rds_gate/tracked")" = '2'
-cmp "$rds_gate/expected-scope.sorted" "$rds_gate/commit-scope.sorted"
-test -z "$(git ls-files .superpowers)"
+rds_require_empty_producer "$rds_gate/superpowers-tracked.out" "$rds_gate/superpowers-tracked.err" git ls-files .superpowers
+: > "$rds_gate/unused-scope"
+rds_validate_history "$rds_gate/history" plan-unpublished - '9920097a40175c084c46fee1c306fa61cdbaf823' "$rds_gate/unused-scope" "$rds_gate/unused-scope" "$rds_gate/unused-scope" "$rds_gate/unused-scope"
+cp "$rds_gate/history/approved-plan-output" "$rds_gate/approved-plan.tmp"
+mv "$rds_gate/approved-plan.tmp" "$rds_durable/approved-plan.tsv"
+test -s "$rds_durable/approved-plan.tsv"
 git push origin "HEAD:refs/heads/$rds_branch"
 git fetch origin "$rds_branch"
 test "$(git rev-parse HEAD)" = "$(git rev-parse "origin/$rds_branch")"
 git merge-base --is-ancestor HEAD "origin/$rds_branch"
 git merge-base --is-ancestor "origin/$rds_branch" HEAD
+rds_validate_history "$rds_gate/history-published" plan "$rds_durable/approved-plan.tsv" '9920097a40175c084c46fee1c306fa61cdbaf823' "$rds_gate/unused-scope" "$rds_gate/unused-scope" "$rds_gate/unused-scope" "$rds_gate/unused-scope"
 git ls-remote --tags origin refs/tags/v7.2.1-neutral.1 > "$rds_gate/tag"
 test ! -s "$rds_gate/tag"
 gh pr list --repo joeroberts/terraform-aws-rds --head "$rds_branch" --state all --json number > "$rds_gate/prs.json"
@@ -99,15 +106,23 @@ rds_pristine="$rds_task_root/pristine"
 rds_sanitized="$rds_task_root/sanitized"
 rds_expected="$rds_task_root/independent-expected"
 rds_evidence="$rds_task_root/evidence"
+rds_durable='.superpowers/sdd/2026-08-12-rds-neutral-derivative'
+rds_guard_script="$rds_durable/production-guards.bash"
+rds_guard_sha='abd731e83194070da157fbb641582e61082afd5e26a9d8118956116eb2fa1de1'
 mkdir -p "$rds_pristine" "$rds_sanitized" "$rds_expected" "$rds_evidence"
+printf '%s  %s\n' "$rds_guard_sha" "$rds_guard_script" > "$rds_evidence/guard.sha256"
+shasum -a 256 -c "$rds_evidence/guard.sha256"
+. "$rds_guard_script"
 test "$(git branch --show-current)" = "$rds_branch"
 test "$(git remote get-url origin)" = 'git@github.com:joeroberts/terraform-aws-rds.git'
 rds_git_entry=$(git rev-parse --git-dir)
 test -e "$rds_git_entry"
 git status --porcelain=v2 --untracked-files=all > "$rds_evidence/pre-status"
 test ! -s "$rds_evidence/pre-status"
-test "$(git rev-parse HEAD^)" = "$rds_base"
-test "$(git log -1 --format=%s)" = 'docs: authorize neutral RDS execution plan'
+test "$(git merge-base "$rds_base" HEAD)" = "$rds_base"
+test -s "$rds_durable/approved-plan.tsv"
+: > "$rds_evidence/unused-scope"
+rds_validate_history "$rds_evidence/history" plan "$rds_durable/approved-plan.tsv" "$rds_upstream_sha" "$rds_evidence/unused-scope" "$rds_evidence/unused-scope" "$rds_evidence/unused-scope" "$rds_evidence/unused-scope"
 git fetch origin "$rds_branch"
 test "$(git rev-parse HEAD)" = "$(git rev-parse "origin/$rds_branch")"
 git merge-base --is-ancestor HEAD "origin/$rds_branch"
@@ -311,12 +326,6 @@ cmp "$rds_pristine/LICENSE" "$rds_expected/LICENSE"
 printf '%s\n' UPSTREAM.md >> "$rds_evidence/upstream-paths"
 sort "$rds_evidence/upstream-paths" > "$rds_evidence/owned-paths"
 test "$(awk 'END { print NR }' "$rds_evidence/owned-paths")" = '147'
-: > "$rds_evidence/expected-hashes"
-while IFS= read -r rds_path; do
-  test -n "$rds_path"
-  (cd "$rds_expected" && shasum -a 256 "$rds_path") >> "$rds_evidence/expected-hashes"
-done < "$rds_evidence/owned-paths"
-test "$(awk 'END { print NR }' "$rds_evidence/expected-hashes")" = '147'
 rsync -a --files-from="$rds_evidence/owned-paths" "$rds_expected/" ./
 rds_git_entry=$(git rev-parse --git-dir)
 test -e "$rds_git_entry"
@@ -331,37 +340,11 @@ while IFS= read -r -d '' rds_file; do
   printf '%s\n' "$rds_path" >> "$rds_evidence/target-owned.raw"
 done < "$rds_evidence/target-files.nul"
 sort "$rds_evidence/target-owned.raw" > "$rds_evidence/target-owned"
-cmp "$rds_evidence/owned-paths" "$rds_evidence/target-owned"
-: > "$rds_evidence/target-hashes"
-while IFS= read -r rds_path; do
-  test -n "$rds_path"
-  shasum -a 256 "$rds_path" >> "$rds_evidence/target-hashes"
-done < "$rds_evidence/owned-paths"
-cmp "$rds_evidence/expected-hashes" "$rds_evidence/target-hashes"
+rds_require_path_hash_manifest "$rds_expected" . "$rds_evidence/owned-paths" "$rds_evidence/target-owned" "$rds_evidence/import-manifest"
 git ls-files --others --exclude-standard > "$rds_evidence/untracked.raw"
 sort "$rds_evidence/untracked.raw" > "$rds_evidence/untracked"
 cmp "$rds_evidence/owned-paths" "$rds_evidence/untracked"
-while IFS= read -r rds_path; do
-  test -n "$rds_path"
-  set +e
-  git diff --no-index --check /dev/null "$rds_path" > "$rds_evidence/whitespace.out" 2> "$rds_evidence/whitespace.err"
-  rds_check_status=$?
-  set -e
-  if test "$rds_check_status" = '1'; then
-    test ! -s "$rds_evidence/whitespace.out"
-    test ! -s "$rds_evidence/whitespace.err"
-  else
-    test "$rds_path" = 'README.md'
-    cmp "$rds_expected/README.md" README.md
-    set +e
-    git -c core.whitespace=-blank-at-eof diff --no-index --check /dev/null "$rds_path" > "$rds_evidence/whitespace-exception.out" 2> "$rds_evidence/whitespace-exception.err"
-    rds_exception_status=$?
-    set -e
-    test "$rds_exception_status" = '1'
-    test ! -s "$rds_evidence/whitespace-exception.out"
-    test ! -s "$rds_evidence/whitespace-exception.err"
-  fi
-done < "$rds_evidence/owned-paths"
+rds_validate_worklist_whitespace "$rds_evidence/owned-paths" "$rds_expected/README.md" "$rds_evidence/whitespace"
 git add --pathspec-from-file="$rds_evidence/owned-paths"
 git diff --cached --name-only > "$rds_evidence/staged.raw"
 sort "$rds_evidence/staged.raw" > "$rds_evidence/staged"
@@ -418,7 +401,13 @@ rds_clone="$rds_task_root/verified-upstream"
 rds_archive="$rds_task_root/upstream.tar"
 rds_pristine="$rds_task_root/pristine"
 rds_evidence="$rds_task_root/evidence"
+rds_durable='.superpowers/sdd/2026-08-12-rds-neutral-derivative'
+rds_guard_script="$rds_durable/production-guards.bash"
+rds_guard_sha='abd731e83194070da157fbb641582e61082afd5e26a9d8118956116eb2fa1de1'
 mkdir -p "$rds_pristine" "$rds_evidence"
+printf '%s  %s\n' "$rds_guard_sha" "$rds_guard_script" > "$rds_evidence/guard.sha256"
+shasum -a 256 -c "$rds_evidence/guard.sha256"
+. "$rds_guard_script"
 test "$(git branch --show-current)" = "$rds_branch"
 test "$(git remote get-url origin)" = 'git@github.com:joeroberts/terraform-aws-rds.git'
 git status --porcelain=v2 --untracked-files=all > "$rds_evidence/pre-status"
@@ -431,6 +420,12 @@ test "$(git -C "$rds_clone" rev-parse HEAD)" = "$rds_upstream_sha"
 git -C "$rds_clone" archive --format=tar --output="$rds_archive" HEAD
 test -s "$rds_archive"
 tar -xf "$rds_archive" -C "$rds_pristine"
+git -C "$rds_clone" ls-tree -r --name-only HEAD > "$rds_evidence/task1-scope.raw"
+printf '%s\n' UPSTREAM.md >> "$rds_evidence/task1-scope.raw"
+sort "$rds_evidence/task1-scope.raw" > "$rds_evidence/task1-scope"
+test "$(awk 'END { print NR }' "$rds_evidence/task1-scope")" = '147'
+: > "$rds_evidence/unused-scope"
+rds_validate_history "$rds_evidence/history" task1 "$rds_durable/approved-plan.tsv" "$rds_upstream_sha" "$rds_evidence/task1-scope" "$rds_evidence/unused-scope" "$rds_evidence/unused-scope" "$rds_evidence/unused-scope"
 git ls-files '*.tf' > "$rds_evidence/hcl-paths.raw"
 sort "$rds_evidence/hcl-paths.raw" > "$rds_evidence/hcl-paths"
 test "$(awk 'END { print NR }' "$rds_evidence/hcl-paths")" = '104'
@@ -576,32 +571,7 @@ while IFS= read -r rds_path; do
   shasum -a 256 "$rds_path" >> "$rds_evidence/hcl-post-s3-after-stability"
 done < "$rds_evidence/hcl-paths"
 cmp "$rds_evidence/hcl-post-s3-before-stability" "$rds_evidence/hcl-post-s3-after-stability"
-ruby - "$rds_evidence/wrapper-readmes" <<'RUBY'
-list = ARGV.fetch(0)
-notice = "<!-- Modified by joeroberts/terraform-aws-rds on 2026-08-12; see UPSTREAM.md. -->"
-expected = File.readlines(list, chomp: true).to_h do |path|
-  subpath = path.delete_suffix("/README.md")
-  [path, "git::ssh://git@github.com/joeroberts/terraform-aws-rds.git//#{subpath}?ref=v7.2.1-neutral.1"]
-end
-abort "wrapper count" unless expected.length == 7
-active = 0
-commented = 0
-expected.each do |path, source|
-  lines = File.readlines(path, chomp: true)
-  abort "#{path}: notice" unless lines.first == notice
-  source_lines = lines.select { |line| line.include?(source) }
-  abort "#{path}: exact source mapping" unless source_lines.length == 3
-  active += source_lines.count { |line| line !~ /^\s*#/ }
-  commented += source_lines.count { |line| line =~ /^\s*#/ }
-end
-root_lines = File.readlines("README.md", chomp: true)
-root_source = 'source = "git::ssh://git@github.com/joeroberts/terraform-aws-rds.git?ref=v7.2.1-neutral.1"'
-abort "root source count" unless root_lines.count { |line| line.include?(root_source) } == 2
-active += 2
-abort "active source count" unless active == 16
-abort "commented source count" unless commented == 7
-abort "total source count" unless active + commented == 23
-RUBY
+rds_validate_wrapper_sources . "$rds_evidence/wrapper-readmes"
 set +e
 rg -n 'terraform-aws-modules/rds/aws|tfr:///terraform-aws-modules/rds/aws|terraform-aws-modules/terraform-aws-rds.git' README.md wrappers -g README.md > "$rds_evidence/old-rds-sources" 2> "$rds_evidence/old-rds-sources.err"
 rds_rg_status=$?
@@ -696,14 +666,30 @@ Expected: all and exactly 18 doc roots regenerate without changing any of 104 HC
 ```bash
 set -euo pipefail
 rds_branch='neutral/v7.2.1-neutral.1'
+rds_upstream_sha='9920097a40175c084c46fee1c306fa61cdbaf823'
 rds_task_root=$(mktemp -d /private/tmp/rds-task3-workflows.XXXXXX)
 rds_evidence="$rds_task_root/evidence"
+rds_clone="$rds_task_root/verified-upstream"
+rds_durable='.superpowers/sdd/2026-08-12-rds-neutral-derivative'
+rds_guard_script="$rds_durable/production-guards.bash"
+rds_guard_sha='abd731e83194070da157fbb641582e61082afd5e26a9d8118956116eb2fa1de1'
 mkdir -p "$rds_evidence/refs"
+printf '%s  %s\n' "$rds_guard_sha" "$rds_guard_script" > "$rds_evidence/guard.sha256"
+shasum -a 256 -c "$rds_evidence/guard.sha256"
+. "$rds_guard_script"
 test "$(git branch --show-current)" = "$rds_branch"
 git status --porcelain=v2 --untracked-files=all > "$rds_evidence/pre-status"
 test ! -s "$rds_evidence/pre-status"
 git fetch origin "$rds_branch"
 test "$(git rev-parse HEAD)" = "$(git rev-parse "origin/$rds_branch")"
+git clone --quiet --depth 1 --branch v7.2.1 https://github.com/terraform-aws-modules/terraform-aws-rds.git "$rds_clone"
+test "$(git -C "$rds_clone" rev-parse HEAD)" = "$rds_upstream_sha"
+git -C "$rds_clone" ls-tree -r --name-only HEAD > "$rds_evidence/task1-scope.raw"
+printf '%s\n' UPSTREAM.md >> "$rds_evidence/task1-scope.raw"
+sort "$rds_evidence/task1-scope.raw" > "$rds_evidence/task1-scope"
+printf '%s\n' README.md examples/s3-import-mysql/main.tf wrappers/README.md wrappers/db_instance/README.md wrappers/db_instance_automated_backups_replication/README.md wrappers/db_instance_role_association/README.md wrappers/db_option_group/README.md wrappers/db_parameter_group/README.md wrappers/db_subnet_group/README.md > "$rds_evidence/task2-scope"
+: > "$rds_evidence/unused-scope"
+rds_validate_history "$rds_evidence/history" task2 "$rds_durable/approved-plan.tsv" "$rds_upstream_sha" "$rds_evidence/task1-scope" "$rds_evidence/task2-scope" "$rds_evidence/unused-scope" "$rds_evidence/unused-scope"
 printf '%s\t%s\t%s\t%s\t%s\n' \
   'actions/checkout' 'v7' '3d3c42e5aac5ba805825da76410c181273ba90b1' '4' 'https://github.com/actions/checkout.git' \
   'actions/setup-node' 'v7' '820762786026740c76f36085b0efc47a31fe5020' '1' 'https://github.com/actions/setup-node.git' \
@@ -985,15 +971,40 @@ set -euo pipefail
 rds_branch='neutral/v7.2.1-neutral.1'
 rds_upstream_sha='9920097a40175c084c46fee1c306fa61cdbaf823'
 rds_task_root=$(mktemp -d /private/tmp/rds-task4-verification.XXXXXX)
+rds_run_id="$(date -u +%Y%m%dT%H%M%SZ)-$$-$RANDOM"
 rds_clone="$rds_task_root/verified-upstream"
 rds_archive="$rds_task_root/upstream.tar"
 rds_pristine="$rds_task_root/pristine"
 rds_expected="$rds_task_root/expected"
-rds_evidence="$rds_task_root/evidence"
 rds_durable='.superpowers/sdd/2026-08-12-rds-neutral-derivative'
-rds_validation_log="$rds_durable/task4-validation.log"
-rds_final_marker="$rds_durable/task4-final-marker"
-mkdir -p "$rds_pristine" "$rds_expected" "$rds_evidence" "$rds_durable"
+rds_run_root="$rds_durable/task4-runs/$rds_run_id"
+rds_evidence="$rds_run_root/evidence"
+rds_validation_log="$rds_run_root/validation.log"
+rds_guard_script="$rds_durable/production-guards.bash"
+rds_guard_sha='abd731e83194070da157fbb641582e61082afd5e26a9d8118956116eb2fa1de1'
+mkdir -p "$rds_pristine" "$rds_expected" "$rds_durable"
+rds_prepare_out="$rds_task_root/task4-prepare.out"
+rds_current_tmp="$rds_durable/.task4-current-$rds_run_id.tmp"
+test ! -e "$rds_current_tmp"
+printf '%s\n' "$rds_run_id" > "$rds_current_tmp"
+mv "$rds_current_tmp" "$rds_durable/task4-current-run-id"
+rds_early_quarantine="$rds_durable/task4-quarantine/$rds_run_id"
+mkdir -p "$rds_early_quarantine"
+for rds_active_name in task4-active-marker.json task4-active-log task4-active-result.json; do
+  if test -e "$rds_durable/$rds_active_name"; then
+    test -f "$rds_durable/$rds_active_name"
+    mv "$rds_durable/$rds_active_name" "$rds_early_quarantine/$rds_active_name"
+  fi
+  test ! -e "$rds_durable/$rds_active_name"
+done
+printf '%s  %s\n' "$rds_guard_sha" "$rds_guard_script" > "$rds_task_root/guard.sha256"
+shasum -a 256 -c "$rds_task_root/guard.sha256"
+. "$rds_guard_script"
+rds_prepare_task4_run "$rds_durable" "$rds_run_id" > "$rds_prepare_out" 2>&1
+mkdir "$rds_evidence"
+test ! -e "$rds_durable/task4-active-marker.json"
+test ! -e "$rds_durable/task4-active-log"
+test ! -e "$rds_durable/task4-active-result.json"
 test "$(git branch --show-current)" = "$rds_branch"
 test "$(git remote get-url origin)" = 'git@github.com:joeroberts/terraform-aws-rds.git'
 rds_git_entry=$(git rev-parse --git-dir)
@@ -1005,6 +1016,7 @@ rds_verified_head=$(git rev-parse HEAD)
 test "$rds_verified_head" = "$(git rev-parse "origin/$rds_branch")"
 git merge-base --is-ancestor HEAD "origin/$rds_branch"
 git merge-base --is-ancestor "origin/$rds_branch" HEAD
+printf 'RUN run=%s head=%s\n' "$rds_run_id" "$rds_verified_head" > "$rds_validation_log"
 terraform version -json > "$rds_evidence/terraform-version.json"
 ruby -rjson -e 'print JSON.parse(File.read(ARGV.fetch(0))).fetch("terraform_version")' "$rds_evidence/terraform-version.json" > "$rds_evidence/terraform-version"
 IFS= read -r rds_terraform_version < "$rds_evidence/terraform-version"
@@ -1114,7 +1126,6 @@ while IFS= read -r rds_dir; do
   rds_roots[${#rds_roots[@]}]="$rds_dir"
 done < "$rds_evidence/root-dirs"
 test "${#rds_roots[@]}" = "$rds_root_count"
-printf 'RUN %s HEAD %s\n' "$(date -u +%Y-%m-%dT%H:%M:%SZ)" "$rds_verified_head" >> "$rds_validation_log"
 rds_attempt=1
 rds_validation_complete=0
 while test "$rds_attempt" -le '3'; do
@@ -1168,8 +1179,8 @@ while test "$rds_attempt" -le '3'; do
   rds_attempt=$((rds_attempt + 1))
 done
 if test "$rds_validation_complete" != '1'; then
-  printf 'FINAL FAIL head=%s\n' "$rds_verified_head" >> "$rds_validation_log"
-  printf 'FINAL FAIL %s\n' "$rds_verified_head" > "$rds_final_marker"
+  printf 'FINAL FAIL run=%s head=%s\n' "$rds_run_id" "$rds_verified_head" >> "$rds_validation_log"
+  test ! -e "$rds_durable/task4-active-marker.json"
   exit 1
 fi
 git clone --quiet --depth 1 --branch v7.2.1 https://github.com/terraform-aws-modules/terraform-aws-rds.git "$rds_clone"
@@ -1251,14 +1262,7 @@ while IFS= read -r rds_path; do
 done < "$rds_evidence/upstream-paths"
 sort "$rds_evidence/actual-upstream-deltas.raw" > "$rds_evidence/actual-upstream-deltas"
 cmp "$rds_evidence/notice-paths" "$rds_evidence/actual-upstream-deltas"
-rds_notice='Modified by joeroberts/terraform-aws-rds on 2026-08-12; see UPSTREAM.md.'
-while IFS= read -r rds_path; do
-  test -n "$rds_path"
-  case "$rds_path" in
-    *.md) test "$(head -n 1 "$rds_path")" = "<!-- $rds_notice -->" ;;
-    *) test "$(head -n 1 "$rds_path")" = "# $rds_notice" ;;
-  esac
-done < "$rds_evidence/notice-paths"
+rds_validate_notices . "$rds_evidence/notice-paths"
 cmp "$rds_pristine/LICENSE" LICENSE
 set +e
 rg -n 'terraform-aws-modules/iam/aws' "$rds_pristine" -g '*.tf' > "$rds_evidence/iam-lines" 2> "$rds_evidence/iam-lines.err"
@@ -1403,13 +1407,7 @@ test "$(awk 'END { print NR }' "$rds_evidence/source-paths")" = '147'
 rds_neutral_pattern="$(printf '%s|%s|%s|%s|%s|%s|%s' 'put''in' 'khuy''lo' 'ukr''ain' 'russ''ia' 'bela''rus' 'cri''mea' 'don''bas')"
 while IFS= read -r rds_path; do
   test -n "$rds_path"
-  set +e
-  rg -n -i "$rds_neutral_pattern" -- "$rds_path" > "$rds_evidence/tree-scan.out" 2> "$rds_evidence/tree-scan.err"
-  rds_rg_status=$?
-  set -e
-  test "$rds_rg_status" = '1'
-  test ! -s "$rds_evidence/tree-scan.out"
-  test ! -s "$rds_evidence/tree-scan.err"
+  rds_require_rg_no_match "$rds_evidence/tree-scan.out" "$rds_evidence/tree-scan.err" -n -i "$rds_neutral_pattern" -- "$rds_path"
 done < "$rds_evidence/source-paths"
 git rev-list --all > "$rds_evidence/revisions"
 rds_revision_count=$(awk 'END { print NR }' "$rds_evidence/revisions")
@@ -1428,9 +1426,14 @@ set -e
 test "$rds_git_grep_status" = '1'
 test ! -s "$rds_evidence/history-scan.out"
 test ! -s "$rds_evidence/history-scan.err"
-git rev-list --objects --all > "$rds_evidence/history-object-manifest"
-test -s "$rds_evidence/history-object-manifest"
-shasum -a 256 "$rds_evidence/revisions" "$rds_evidence/source-paths" "$rds_evidence/history-object-manifest" > "$rds_evidence/manifest-digests"
+cp "$rds_evidence/expected-source-paths" "$rds_evidence/task1-scope"
+printf '%s\n' README.md examples/s3-import-mysql/main.tf wrappers/README.md wrappers/db_instance/README.md wrappers/db_instance_automated_backups_replication/README.md wrappers/db_instance_role_association/README.md wrappers/db_option_group/README.md wrappers/db_parameter_group/README.md wrappers/db_subnet_group/README.md > "$rds_evidence/task2-scope"
+printf '%s\n' .github/workflows/lock.yml .github/workflows/pr-title.yml .github/workflows/pre-commit.yml .github/workflows/release.yml .github/workflows/stale-actions.yaml .pre-commit-config.yaml > "$rds_evidence/task3-scope"
+cp "$rds_evidence/notice-paths" "$rds_evidence/fix-allowlist.raw"
+printf '%s\n' UPSTREAM.md docs/superpowers/plans/2026-08-12-rds-neutral-derivative.md docs/superpowers/status/2026-08-12-rds-neutral-derivative-blocker.md >> "$rds_evidence/fix-allowlist.raw"
+sort -u "$rds_evidence/fix-allowlist.raw" > "$rds_evidence/fix-allowlist"
+test "$(awk 'END { print NR }' "$rds_evidence/fix-allowlist")" = '22'
+rds_validate_history "$rds_evidence/history" task3-or-review-fix "$rds_durable/approved-plan.tsv" "$rds_upstream_sha" "$rds_evidence/task1-scope" "$rds_evidence/task2-scope" "$rds_evidence/task3-scope" "$rds_evidence/fix-allowlist"
 set +e
 git diff --check > "$rds_evidence/final-diff-check.out" 2> "$rds_evidence/final-diff-check.err"
 rds_check_status=$?
@@ -1440,9 +1443,9 @@ test ! -s "$rds_evidence/final-diff-check.out"
 test ! -s "$rds_evidence/final-diff-check.err"
 git status --porcelain=v2 --untracked-files=all > "$rds_evidence/final-status"
 test ! -s "$rds_evidence/final-status"
-test -z "$(git ls-files .superpowers)"
+rds_require_empty_producer "$rds_evidence/superpowers-tracked.out" "$rds_evidence/superpowers-tracked.err" git ls-files .superpowers
 git check-ignore -q "$rds_validation_log"
-git check-ignore -q "$rds_final_marker"
+git check-ignore -q "$rds_durable/task4-active-marker.json"
 git fetch origin "$rds_branch"
 test "$rds_verified_head" = "$(git rev-parse HEAD)"
 test "$rds_verified_head" = "$(git rev-parse "origin/$rds_branch")"
@@ -1456,8 +1459,10 @@ gh pr list --repo joeroberts/terraform-aws-rds --head "$rds_branch" --state all 
 ruby -rjson -e 'abort "preexisting PR" unless JSON.parse(File.read(ARGV.fetch(0))) == []' "$rds_evidence/prs.json"
 gh release list --repo joeroberts/terraform-aws-rds --limit 1000 --json tagName > "$rds_evidence/releases.json"
 ruby -rjson -e 'abort "reserved release" unless JSON.parse(File.read(ARGV.fetch(0))).none? { |r| r.fetch("tagName") == "v7.2.1-neutral.1" }' "$rds_evidence/releases.json"
-printf 'FINAL PASS %s\n' "$rds_verified_head" >> "$rds_validation_log"
-printf 'FINAL PASS %s\n' "$rds_verified_head" > "$rds_final_marker"
+printf 'FINAL PASS run=%s head=%s\n' "$rds_run_id" "$rds_verified_head" >> "$rds_validation_log"
+rds_publish_task4_result "$rds_durable" "$rds_run_id" "$rds_verified_head" "$rds_validation_log"
+rds_validate_task4_result "$rds_durable" "$rds_verified_head" > "$rds_evidence/published-run-id"
+test "$(sed -n '1p' "$rds_evidence/published-run-id")" = "$rds_run_id"
 ```
 
 Expected: both doc generations preserve the 104-HCL manifest and stable document bytes; format, exact 13-rule TFLint, and one complete 26-root sequential attempt pass; any failed attempt restarts from root 1 with a fresh cache/runtime. A fresh archive proves four exact HCL transforms plus 100 unchanged HCL paths, 19 exact notice/delta paths, seven wrapper notices/inputs, eight docs and 23 sources, five workflows and 17 pins, eight hooks, zero all-files mutation, fail-closed source-tree/history neutrality and manifests, clean bidirectional synchronization, and live absence of PR/tag/release. Only task-created external runtime is left retained; no preexisting path is removed or restored.
@@ -1485,7 +1490,8 @@ rds_repo='joeroberts/terraform-aws-rds'
 rds_task_root=$(mktemp -d /private/tmp/rds-task5-pr.XXXXXX)
 rds_evidence="$rds_task_root/evidence"
 rds_durable='.superpowers/sdd/2026-08-12-rds-neutral-derivative'
-rds_final_marker="$rds_durable/task4-final-marker"
+rds_guard_script="$rds_durable/production-guards.bash"
+rds_guard_sha='abd731e83194070da157fbb641582e61082afd5e26a9d8118956116eb2fa1de1'
 rds_whole_review="$rds_durable/task5-whole-branch-review.md"
 rds_scoped_review="$rds_durable/task5-scoped-rereview.md"
 rds_pr_body="$rds_task_root/pr-body.md"
@@ -1494,6 +1500,9 @@ iam_expected_head='9e1dde08bfd8e20012c455c24ba4146725bd910a'
 iam_branch='neutral/v6.8.0-neutral.1'
 iam_journal='docs/neutralization/CAMPAIGN-STATUS.md'
 mkdir -p "$rds_evidence"
+printf '%s  %s\n' "$rds_guard_sha" "$rds_guard_script" > "$rds_evidence/guard.sha256"
+shasum -a 256 -c "$rds_evidence/guard.sha256"
+. "$rds_guard_script"
 test "$(git branch --show-current)" = "$rds_branch"
 test "$(git remote get-url origin)" = 'git@github.com:joeroberts/terraform-aws-rds.git'
 git status --porcelain=v2 --untracked-files=all > "$rds_evidence/pre-status"
@@ -1503,8 +1512,15 @@ rds_verified_head=$(git rev-parse HEAD)
 test "$rds_verified_head" = "$(git rev-parse "origin/$rds_branch")"
 git merge-base --is-ancestor HEAD "origin/$rds_branch"
 git merge-base --is-ancestor "origin/$rds_branch" HEAD
-printf 'FINAL PASS %s\n' "$rds_verified_head" > "$rds_evidence/expected-final-marker"
-cmp "$rds_evidence/expected-final-marker" "$rds_final_marker"
+rds_validate_task4_result "$rds_durable" "$rds_verified_head" > "$rds_evidence/task4-run-id"
+test "$(awk 'END { print NR }' "$rds_evidence/task4-run-id")" = '1'
+IFS= read -r rds_task4_run_id < "$rds_evidence/task4-run-id"
+rds_task4_evidence="$rds_durable/task4-runs/$rds_task4_run_id/evidence"
+test -d "$rds_task4_evidence"
+find "$rds_durable" -maxdepth 1 -type f -name 'task4-active-marker*' -print > "$rds_evidence/active-markers"
+printf '%s\n' "$rds_durable/task4-active-marker.json" > "$rds_evidence/expected-active-marker"
+cmp "$rds_evidence/expected-active-marker" "$rds_evidence/active-markers"
+rds_validate_history "$rds_evidence/history" task3-or-review-fix "$rds_durable/approved-plan.tsv" '9920097a40175c084c46fee1c306fa61cdbaf823' "$rds_task4_evidence/task1-scope" "$rds_task4_evidence/task2-scope" "$rds_task4_evidence/task3-scope" "$rds_task4_evidence/fix-allowlist"
 if test -f "$rds_scoped_review"; then
   rds_review="$rds_scoped_review"
 else
@@ -1567,32 +1583,12 @@ gh pr create --repo "$rds_repo" --base main --head "$rds_branch" --title 'feat: 
 rds_create_status=$?
 set -e
 test "$rds_create_status" = '0'
-set +e
-rg -o 'https://github\.com/joeroberts/terraform-aws-rds/pull/[0-9]+' "$rds_evidence/create.out" > "$rds_evidence/created-urls" 2> "$rds_evidence/created-urls.err"
-rds_rg_status=$?
-set -e
-test "$rds_rg_status" = '0'
-test ! -s "$rds_evidence/created-urls.err"
-test "$(awk 'END { print NR }' "$rds_evidence/created-urls")" = '1'
-IFS= read -r rds_pr_url < "$rds_evidence/created-urls"
-ruby - "$rds_pr_url" "$rds_evidence/pr-number" <<'RUBY'
-url, output = ARGV
-match = %r{\Ahttps://github\.com/joeroberts/terraform-aws-rds/pull/([1-9][0-9]*)\z}.match(url)
-abort "create URL context" unless match
-File.binwrite(output, match.fetch(1) + "\n")
-RUBY
+rds_parse_pr_create_url "$rds_evidence/create.out" "$rds_evidence/pr-number"
 IFS= read -r rds_pr_number < "$rds_evidence/pr-number"
 case "$rds_pr_number" in ''|*[!0-9]*) exit 1 ;; esac
+rds_pr_url="https://github.com/joeroberts/terraform-aws-rds/pull/$rds_pr_number"
 gh pr view "$rds_pr_number" --repo "$rds_repo" --json url,number,state,baseRefName,headRefName,commits,title --jq '[.url, (.number|tostring), .state, .baseRefName, .headRefName, .commits[-1].oid, .title] | @tsv' > "$rds_evidence/pr-readback"
-test "$(awk 'END { print NR }' "$rds_evidence/pr-readback")" = '1'
-IFS=$'\t' read -r rds_read_url rds_read_number rds_read_state rds_read_base rds_read_head rds_read_oid rds_read_title < "$rds_evidence/pr-readback"
-test "$rds_read_url" = "$rds_pr_url"
-test "$rds_read_number" = "$rds_pr_number"
-test "$rds_read_state" = 'OPEN'
-test "$rds_read_base" = 'main'
-test "$rds_read_head" = "$rds_branch"
-test "$rds_read_oid" = "$rds_verified_head"
-test "$rds_read_title" = 'feat: Add neutral RDS module v7.2.1'
+rds_validate_pr_readback "$rds_evidence/pr-readback" "$rds_pr_url" "$rds_pr_number" "$rds_branch" "$rds_verified_head" 'feat: Add neutral RDS module v7.2.1'
 test "$(git rev-parse HEAD)" = "$rds_verified_head"
 test "$(git -C "$iam_root" branch --show-current)" = "$iam_branch"
 test "$(git -C "$iam_root" remote get-url origin)" = 'git@github.com:joeroberts/terraform-aws-iam.git'
@@ -1671,121 +1667,556 @@ Expected: one reviewed exact-head PR is OPEN from `neutral/v7.2.1-neutral.1` to 
 
 ---
 
-## Required Isolated Adversarial Plan-Safety Fixtures
+## Required Production Guard Library and Adversarial Fixtures
 
-Run these fixtures before Task 0 and preserve their output with the plan-amendment evidence. They exercise the fail-closed primitives only in a fresh temporary Git repository; they do not import source or mutate this worktree.
+Run this fence before Task 0. It materializes the exact ignored guard library consumed by Tasks 0, 1, 2, 3, 4, and 5, verifies its fixed digest, then sends good and bad inputs through those exact functions. It does not import source or mutate a tracked path.
 
 ```bash
 set -euo pipefail
-rds_fixture_root=$(mktemp -d /private/tmp/rds-plan-fixtures.XXXXXX)
-rds_fixture_repo="$rds_fixture_root/repository"
+rds_fixture_root=$(mktemp -d /private/tmp/rds-plan-guard-fixtures.XXXXXX)
 rds_fixture_out="$rds_fixture_root/output"
-mkdir -p "$rds_fixture_repo" "$rds_fixture_out"
-rds_capture() {
-  rds_capture_stdout=$1
-  rds_capture_stderr=$2
+rds_durable='.superpowers/sdd/2026-08-12-rds-neutral-derivative'
+rds_guard_script="$rds_durable/production-guards.bash"
+mkdir -p "$rds_fixture_out" "$rds_durable"
+ruby - "$rds_guard_script" <<'RUBY'
+path = ARGV.fetch(0)
+bytes = <<'BASH'
+set -euo pipefail
+
+rds_run_producer() {
+  rds_guard_stdout=$1
+  rds_guard_stderr=$2
   shift 2
   set +e
-  "$@" > "$rds_capture_stdout" 2> "$rds_capture_stderr"
-  rds_capture_status=$?
+  "$@" > "$rds_guard_stdout" 2> "$rds_guard_stderr"
+  rds_guard_status=$?
   set -e
-  test "$rds_capture_status" = '0'
+  test "$rds_guard_status" = '0'
 }
-if rds_capture "$rds_fixture_out/failed.out" "$rds_fixture_out/failed.err" sh -c 'exit 42'; then
-  exit 1
-fi
-if rds_capture "$rds_fixture_out/mid-read.out" "$rds_fixture_out/mid-read.err" sh -c 'printf "first-path\n"; exit 41'; then
-  exit 1
-fi
-test "$(awk 'END { print NR }' "$rds_fixture_out/mid-read.out")" = '1'
+
+rds_require_empty_producer() {
+  rds_guard_stdout=$1
+  rds_guard_stderr=$2
+  shift 2
+  rds_run_producer "$rds_guard_stdout" "$rds_guard_stderr" "$@"
+  test ! -s "$rds_guard_stdout"
+  test ! -s "$rds_guard_stderr"
+}
+
+rds_require_path_hash_manifest() {
+  rds_guard_expected_root=$1
+  rds_guard_actual_root=$2
+  rds_guard_worklist=$3
+  rds_guard_actual_paths=$4
+  rds_guard_evidence_prefix=$5
+  test -s "$rds_guard_worklist"
+  cmp "$rds_guard_worklist" "$rds_guard_actual_paths"
+  : > "$rds_guard_evidence_prefix.expected-hashes"
+  : > "$rds_guard_evidence_prefix.actual-hashes"
+  rds_guard_count=0
+  while IFS= read -r rds_guard_path; do
+    test -n "$rds_guard_path"
+    rds_guard_count=$((rds_guard_count + 1))
+    test -f "$rds_guard_expected_root/$rds_guard_path"
+    test -f "$rds_guard_actual_root/$rds_guard_path"
+    (cd "$rds_guard_expected_root" && shasum -a 256 "$rds_guard_path") >> "$rds_guard_evidence_prefix.expected-hashes"
+    (cd "$rds_guard_actual_root" && shasum -a 256 "$rds_guard_path") >> "$rds_guard_evidence_prefix.actual-hashes"
+  done < "$rds_guard_worklist"
+  awk 'END { print NR }' "$rds_guard_worklist" > "$rds_guard_evidence_prefix.expected-count"
+  test -s "$rds_guard_evidence_prefix.expected-count"
+  IFS= read -r rds_guard_expected_count < "$rds_guard_evidence_prefix.expected-count"
+  case "$rds_guard_expected_count" in ''|*[!0-9]*) return 1 ;; esac
+  test "$rds_guard_count" = "$rds_guard_expected_count"
+  cmp "$rds_guard_evidence_prefix.expected-hashes" "$rds_guard_evidence_prefix.actual-hashes"
+}
+
+rds_validate_worklist_whitespace() {
+  rds_guard_worklist=$1
+  rds_guard_expected_readme=$2
+  rds_guard_evidence_prefix=$3
+  test -s "$rds_guard_worklist"
+  : > "$rds_guard_evidence_prefix.checked"
+  while IFS= read -r rds_guard_path; do
+    test -n "$rds_guard_path"
+    set +e
+    git diff --no-index --check /dev/null "$rds_guard_path" > "$rds_guard_evidence_prefix.out" 2> "$rds_guard_evidence_prefix.err"
+    rds_guard_status=$?
+    set -e
+    if test "$rds_guard_status" = '1' && test ! -s "$rds_guard_evidence_prefix.out" && test ! -s "$rds_guard_evidence_prefix.err"; then
+      printf '%s\n' "$rds_guard_path" >> "$rds_guard_evidence_prefix.checked"
+      continue
+    fi
+    test "$rds_guard_status" = '1'
+    test "$rds_guard_path" = 'README.md'
+    cmp "$rds_guard_expected_readme" README.md
+    set +e
+    git -c core.whitespace=-blank-at-eof diff --no-index --check /dev/null "$rds_guard_path" > "$rds_guard_evidence_prefix.exception.out" 2> "$rds_guard_evidence_prefix.exception.err"
+    rds_guard_exception_status=$?
+    set -e
+    test "$rds_guard_exception_status" = '1'
+    test ! -s "$rds_guard_evidence_prefix.exception.out"
+    test ! -s "$rds_guard_evidence_prefix.exception.err"
+    printf '%s\n' "$rds_guard_path" >> "$rds_guard_evidence_prefix.checked"
+  done < "$rds_guard_worklist"
+  cmp "$rds_guard_worklist" "$rds_guard_evidence_prefix.checked"
+}
+
+rds_validate_wrapper_sources() {
+  rds_guard_root=$1
+  rds_guard_list=$2
+  ruby - "$rds_guard_root" "$rds_guard_list" <<'RUBY_GUARD'
+root, list = ARGV
+notice = "<!-- Modified by joeroberts/terraform-aws-rds on 2026-08-12; see UPSTREAM.md. -->"
+paths = File.readlines(list, chomp: true)
+abort "wrapper count" unless paths.length == 7 && paths.uniq.length == 7
+active = 0
+commented = 0
+paths.each do |relative|
+  subpath = relative.delete_suffix("/README.md")
+  source = "git::ssh://git@github.com/joeroberts/terraform-aws-rds.git//#{subpath}?ref=v7.2.1-neutral.1"
+  lines = File.readlines(File.join(root, relative), chomp: true)
+  abort "#{relative}: notice" unless lines.first == notice
+  found = lines.select { |line| line.include?(source) }
+  abort "#{relative}: exact source mapping" unless found.length == 3
+  active += found.count { |line| line !~ /^\s*#/ }
+  commented += found.count { |line| line =~ /^\s*#/ }
+end
+root_lines = File.readlines(File.join(root, "README.md"), chomp: true)
+root_source = 'source = "git::ssh://git@github.com/joeroberts/terraform-aws-rds.git?ref=v7.2.1-neutral.1"'
+root_count = root_lines.count { |line| line.include?(root_source) }
+abort "root source count" unless root_count == 2
+active += root_count
+abort "active/commented/total source count" unless [active, commented, active + commented] == [16, 7, 23]
+RUBY_GUARD
+}
+
+rds_validate_notices() {
+  rds_guard_root=$1
+  rds_guard_list=$2
+  ruby - "$rds_guard_root" "$rds_guard_list" <<'RUBY_GUARD'
+root, list = ARGV
+notice = "Modified by joeroberts/terraform-aws-rds on 2026-08-12; see UPSTREAM.md."
+paths = File.readlines(list, chomp: true)
+abort "notice path count" unless paths.length == 19 && paths.uniq.length == 19
+paths.each do |relative|
+  first = File.open(File.join(root, relative), &:readline).chomp
+  expected = relative.end_with?(".md") ? "<!-- #{notice} -->" : "# #{notice}"
+  abort "#{relative}: notice bytes" unless first == expected
+end
+RUBY_GUARD
+}
+
+rds_require_rg_no_match() {
+  rds_guard_stdout=$1
+  rds_guard_stderr=$2
+  shift 2
+  set +e
+  rg "$@" > "$rds_guard_stdout" 2> "$rds_guard_stderr"
+  rds_guard_status=$?
+  set -e
+  test "$rds_guard_status" = '1'
+  test ! -s "$rds_guard_stdout"
+  test ! -s "$rds_guard_stderr"
+}
+
+rds_parse_pr_create_url() {
+  rds_guard_create_output=$1
+  rds_guard_number_output=$2
+  ruby - "$rds_guard_create_output" "$rds_guard_number_output" <<'RUBY_GUARD'
+input, output = ARGV
+lines = File.readlines(input, chomp: true)
+abort "create URL cardinality" unless lines.length == 1
+match = %r{\Ahttps://github\.com/joeroberts/terraform-aws-rds/pull/([1-9][0-9]*)\z}.match(lines.first)
+abort "create URL context" unless match
+number = match[1]
+abort "create PR number" unless number
+File.binwrite(output, number + "\n")
+RUBY_GUARD
+}
+
+rds_validate_pr_readback() {
+  rds_guard_readback=$1
+  rds_guard_url=$2
+  rds_guard_number=$3
+  rds_guard_branch=$4
+  rds_guard_head=$5
+  rds_guard_title=$6
+  ruby - "$rds_guard_readback" "$rds_guard_url" "$rds_guard_number" "$rds_guard_branch" "$rds_guard_head" "$rds_guard_title" <<'RUBY_GUARD'
+path, url, number, branch, head, title = ARGV
+lines = File.readlines(path, chomp: true)
+abort "PR readback cardinality" unless lines.length == 1
+fields = lines.first.split("\t", -1)
+expected = [url, number, "OPEN", "main", branch, head, title]
+abort "PR readback context" unless fields == expected
+RUBY_GUARD
+}
+
+rds_prepare_task4_run() {
+  rds_guard_durable=$1
+  rds_guard_run_id=$2
+  rds_guard_quarantine="$rds_guard_durable/task4-quarantine/$rds_guard_run_id"
+  rds_guard_current_tmp="$rds_guard_durable/.task4-current-$rds_guard_run_id.tmp"
+  test ! -e "$rds_guard_current_tmp"
+  printf '%s\n' "$rds_guard_run_id" > "$rds_guard_current_tmp"
+  mv "$rds_guard_current_tmp" "$rds_guard_durable/task4-current-run-id"
+  mkdir -p "$rds_guard_quarantine"
+  for rds_guard_name in task4-active-marker.json task4-active-log task4-active-result.json; do
+    rds_guard_active="$rds_guard_durable/$rds_guard_name"
+    if test -e "$rds_guard_active"; then
+      test -f "$rds_guard_active"
+      mv "$rds_guard_active" "$rds_guard_quarantine/$rds_guard_name"
+    fi
+    test ! -e "$rds_guard_active"
+  done
+  test ! -e "$rds_guard_durable/task4-runs/$rds_guard_run_id"
+  mkdir "$rds_guard_durable/task4-runs/$rds_guard_run_id"
+}
+
+rds_publish_task4_result() {
+  rds_guard_durable=$1
+  rds_guard_run_id=$2
+  rds_guard_head=$3
+  rds_guard_log=$4
+  rds_guard_run_root="$rds_guard_durable/task4-runs/$rds_guard_run_id"
+  rds_guard_result="$rds_guard_run_root/result.json"
+  rds_guard_marker_tmp="$rds_guard_durable/.task4-marker-$rds_guard_run_id.tmp"
+  test -s "$rds_guard_log"
+  test ! -e "$rds_guard_marker_tmp"
+  shasum -a 256 "$rds_guard_log" > "$rds_guard_run_root/log.sha256.raw"
+  awk 'NR == 1 { print $1 }' "$rds_guard_run_root/log.sha256.raw" > "$rds_guard_run_root/log.sha256"
+  test "$(awk 'END { print NR }' "$rds_guard_run_root/log.sha256")" = '1'
+  IFS= read -r rds_guard_log_hash < "$rds_guard_run_root/log.sha256"
+  case "$rds_guard_log_hash" in ''|*[!0-9a-f]*) return 1 ;; esac
+  test "${#rds_guard_log_hash}" = '64'
+  ruby -rjson - "$rds_guard_result" "$rds_guard_run_id" "$rds_guard_head" "$rds_guard_log_hash" <<'RUBY_GUARD'
+path, run_id, head, log_hash = ARGV
+File.binwrite(path, JSON.generate({ "schema" => 1, "result" => "PASS", "run_id" => run_id, "head" => head, "log_sha256" => log_hash }) + "\n")
+RUBY_GUARD
+  cp "$rds_guard_log" "$rds_guard_durable/task4-active-log"
+  cp "$rds_guard_result" "$rds_guard_durable/task4-active-result.json"
+  cp "$rds_guard_result" "$rds_guard_marker_tmp"
+  mv "$rds_guard_marker_tmp" "$rds_guard_durable/task4-active-marker.json"
+}
+
+rds_validate_task4_result() {
+  rds_guard_durable=$1
+  rds_guard_head=$2
+  ruby -rjson -rdigest - "$rds_guard_durable" "$rds_guard_head" <<'RUBY_GUARD'
+durable, head = ARGV
+marker_path = File.join(durable, "task4-active-marker.json")
+log_path = File.join(durable, "task4-active-log")
+result_path = File.join(durable, "task4-active-result.json")
+current_path = File.join(durable, "task4-current-run-id")
+[marker_path, log_path, result_path, current_path].each { |path| abort "missing active result #{path}" unless File.file?(path) }
+marker = JSON.parse(File.read(marker_path))
+result = JSON.parse(File.read(result_path))
+abort "marker/result mismatch" unless marker == result
+run_id = marker.fetch("run_id")
+abort "run ID" unless /\A[0-9]{8}T[0-9]{6}Z-[0-9]+-[0-9]+\z/.match?(run_id)
+abort "not current Task 4 run" unless File.binread(current_path) == run_id + "\n"
+abort "schema/result/head" unless marker == { "schema" => 1, "result" => "PASS", "run_id" => run_id, "head" => head, "log_sha256" => marker.fetch("log_sha256") }
+log = File.binread(log_path)
+abort "log hash" unless Digest::SHA256.hexdigest(log) == marker.fetch("log_sha256")
+lines = log.lines(chomp: true)
+abort "log start" unless lines.first == "RUN run=#{run_id} head=#{head}"
+abort "log final" unless lines.last == "FINAL PASS run=#{run_id} head=#{head}"
+run_result = File.join(durable, "task4-runs", run_id, "result.json")
+run_log = File.join(durable, "task4-runs", run_id, "validation.log")
+abort "run result" unless File.file?(run_result) && File.binread(run_result) == File.binread(result_path)
+abort "run log" unless File.file?(run_log) && File.binread(run_log) == log
+puts run_id
+RUBY_GUARD
+}
+
+rds_history_expect_commit() {
+  rds_guard_commit=$1
+  rds_guard_parent=$2
+  rds_guard_subject=$3
+  rds_guard_mode=$4
+  rds_guard_scope=$5
+  rds_guard_label=$6
+  git show -s --format='%H%x09%P%x09%s' "$rds_guard_commit" > "$rds_guard_history_root/$rds_guard_label.metadata"
+  printf '%s\t%s\t%s\n' "$rds_guard_commit" "$rds_guard_parent" "$rds_guard_subject" > "$rds_guard_history_root/$rds_guard_label.expected-metadata"
+  cmp "$rds_guard_history_root/$rds_guard_label.expected-metadata" "$rds_guard_history_root/$rds_guard_label.metadata"
+  git diff-tree --root --no-commit-id --name-status -r "$rds_guard_commit" > "$rds_guard_history_root/$rds_guard_label.scope.raw"
+  sort "$rds_guard_history_root/$rds_guard_label.scope.raw" > "$rds_guard_history_root/$rds_guard_label.scope"
+  case "$rds_guard_mode" in
+    empty)
+      test ! -s "$rds_guard_history_root/$rds_guard_label.scope"
+      ;;
+    exact-A|exact-M)
+      rds_guard_status=${rds_guard_mode#exact-}
+      awk -v status="$rds_guard_status" '{ print status "\t" $0 }' "$rds_guard_scope" > "$rds_guard_history_root/$rds_guard_label.expected-scope"
+      sort "$rds_guard_history_root/$rds_guard_label.expected-scope" > "$rds_guard_history_root/$rds_guard_label.expected-scope.sorted"
+      cmp "$rds_guard_history_root/$rds_guard_label.expected-scope.sorted" "$rds_guard_history_root/$rds_guard_label.scope"
+      ;;
+    subset-M)
+      test -s "$rds_guard_history_root/$rds_guard_label.scope"
+      while IFS=$'\t' read -r rds_guard_status rds_guard_path; do
+        test "$rds_guard_status" = 'M'
+        test -n "$rds_guard_path"
+        awk -v path="$rds_guard_path" '$0 == path { found = 1 } END { exit(found ? 0 : 1) }' "$rds_guard_scope"
+      done < "$rds_guard_history_root/$rds_guard_label.scope"
+      ;;
+    *) return 1 ;;
+  esac
+  if test "$rds_guard_mode" != 'empty'; then
+    awk -F '\t' '{ print $2 }' "$rds_guard_history_root/$rds_guard_label.scope" >> "$rds_guard_allowed_paths_raw"
+  fi
+}
+
+rds_validate_history() {
+  rds_guard_history_root=$1
+  rds_guard_phase=$2
+  rds_guard_approved_record=$3
+  rds_guard_upstream_sha=$4
+  rds_guard_task1_scope=$5
+  rds_guard_task2_scope=$6
+  rds_guard_task3_scope=$7
+  rds_guard_fix_allowlist=$8
+  mkdir -p "$rds_guard_history_root"
+  rds_guard_allowed_paths_raw="$rds_guard_history_root/allowed-paths.raw"
+  : > "$rds_guard_allowed_paths_raw"
+  printf '%s\n' docs/superpowers/plans/2026-08-12-rds-neutral-derivative.md docs/superpowers/status/2026-08-12-rds-neutral-derivative-blocker.md > "$rds_guard_history_root/plan-scope"
+  printf '%s\n' docs/superpowers/plans/2026-08-12-rds-neutral-derivative.md > "$rds_guard_history_root/planning-scope"
+  printf '%s\n' docs/superpowers/status/2026-08-12-rds-neutral-derivative-blocker.md > "$rds_guard_history_root/blocker-scope"
+  git rev-list --reverse HEAD > "$rds_guard_history_root/branch-commits"
+  rds_guard_commit_count=$(awk 'END { print NR }' "$rds_guard_history_root/branch-commits")
+  case "$rds_guard_commit_count" in ''|*[!0-9]*) return 1 ;; esac
+  test "$rds_guard_commit_count" -ge '5'
+  rds_guard_commits=()
+  while IFS= read -r rds_guard_commit; do
+    test -n "$rds_guard_commit"
+    rds_guard_commits[${#rds_guard_commits[@]}]="$rds_guard_commit"
+  done < "$rds_guard_history_root/branch-commits"
+  test "${#rds_guard_commits[@]}" = "$rds_guard_commit_count"
+  test "${rds_guard_commits[0]}" = '9193123daad52fe028e68e204d8c409d169cf370'
+  test "${rds_guard_commits[1]}" = 'bf6257ef065914832fd11e570ed82cc98c6ce072'
+  test "${rds_guard_commits[2]}" = 'ffa16b253e97aa8d15177ba71febbac75bf8cc2c'
+  test "${rds_guard_commits[3]}" = '46e1fb90ea73281a3e8a75e1e0a7f10e1445f2a8'
+  rds_history_expect_commit "${rds_guard_commits[0]}" '' 'chore: initialize repository' empty "$rds_guard_history_root/plan-scope" bootstrap
+  rds_history_expect_commit "${rds_guard_commits[1]}" "${rds_guard_commits[0]}" 'docs: plan neutral RDS module implementation' exact-A "$rds_guard_history_root/planning-scope" planning
+  rds_history_expect_commit "${rds_guard_commits[2]}" "${rds_guard_commits[1]}" 'docs: record RDS neutralization blocker' exact-A "$rds_guard_history_root/blocker-scope" blocker
+  rds_history_expect_commit "${rds_guard_commits[3]}" "${rds_guard_commits[2]}" 'docs: authorize neutral RDS execution plan' exact-M "$rds_guard_history_root/plan-scope" authorization
+  rds_guard_index=4
+  rds_guard_round=1
+  rds_guard_parent=${rds_guard_commits[3]}
+  while test "$rds_guard_index" -lt "$rds_guard_commit_count" && test "$rds_guard_round" -le '5'; do
+    git show -s --format=%s "${rds_guard_commits[$rds_guard_index]}" > "$rds_guard_history_root/next-subject"
+    IFS= read -r rds_guard_next_subject < "$rds_guard_history_root/next-subject"
+    rds_guard_expected_subject="docs: close RDS plan review round $rds_guard_round"
+    if test "$rds_guard_next_subject" != "$rds_guard_expected_subject"; then
+      break
+    fi
+    rds_history_expect_commit "${rds_guard_commits[$rds_guard_index]}" "$rds_guard_parent" "$rds_guard_expected_subject" exact-M "$rds_guard_history_root/plan-scope" "plan-round-$rds_guard_round"
+    rds_guard_parent=${rds_guard_commits[$rds_guard_index]}
+    rds_guard_index=$((rds_guard_index + 1))
+    rds_guard_round=$((rds_guard_round + 1))
+  done
+  test "$rds_guard_round" -ge '2'
+  rds_guard_plan_tip=$rds_guard_parent
+  rds_guard_plan_parent=$(git show -s --format=%P "$rds_guard_plan_tip")
+  if test "$rds_guard_approved_record" != '-'; then
+    printf '%s\t%s\n' "$rds_guard_plan_tip" "$rds_guard_plan_parent" > "$rds_guard_history_root/computed-approved-plan"
+    cmp "$rds_guard_approved_record" "$rds_guard_history_root/computed-approved-plan"
+  fi
+  case "$rds_guard_phase" in
+    plan|plan-unpublished) ;;
+    task1|task2|task3|task3-or-review-fix)
+      test "$rds_guard_index" -lt "$rds_guard_commit_count"
+      rds_history_expect_commit "${rds_guard_commits[$rds_guard_index]}" "$rds_guard_parent" 'feat: import neutral RDS module v7.2.1' exact-A "$rds_guard_task1_scope" task1
+      rds_guard_parent=${rds_guard_commits[$rds_guard_index]}
+      rds_guard_index=$((rds_guard_index + 1))
+      ;;
+    *) return 1 ;;
+  esac
+  case "$rds_guard_phase" in
+    task2|task3|task3-or-review-fix)
+      test "$rds_guard_index" -lt "$rds_guard_commit_count"
+      rds_history_expect_commit "${rds_guard_commits[$rds_guard_index]}" "$rds_guard_parent" 'docs: point RDS consumers to neutral sources' exact-M "$rds_guard_task2_scope" task2
+      rds_guard_parent=${rds_guard_commits[$rds_guard_index]}
+      rds_guard_index=$((rds_guard_index + 1))
+      ;;
+  esac
+  case "$rds_guard_phase" in
+    task3|task3-or-review-fix)
+      test "$rds_guard_index" -lt "$rds_guard_commit_count"
+      rds_history_expect_commit "${rds_guard_commits[$rds_guard_index]}" "$rds_guard_parent" 'ci: pin and restrict inherited workflows' exact-M "$rds_guard_task3_scope" task3
+      rds_guard_parent=${rds_guard_commits[$rds_guard_index]}
+      rds_guard_index=$((rds_guard_index + 1))
+      ;;
+  esac
+  if test "$rds_guard_phase" = 'task3-or-review-fix' && test "$rds_guard_index" -lt "$rds_guard_commit_count"; then
+    rds_history_expect_commit "${rds_guard_commits[$rds_guard_index]}" "$rds_guard_parent" 'fix: address independent RDS review findings' subset-M "$rds_guard_fix_allowlist" review-fix
+    rds_guard_parent=${rds_guard_commits[$rds_guard_index]}
+    rds_guard_index=$((rds_guard_index + 1))
+  fi
+  test "$rds_guard_index" = "$rds_guard_commit_count"
+  test "$rds_guard_parent" = "$(git rev-parse HEAD)"
+  printf '%s\t%s\n' "$rds_guard_plan_tip" "$rds_guard_plan_parent" > "$rds_guard_history_root/approved-plan-output"
+  git rev-list --all > "$rds_guard_history_root/all-commits.raw"
+  sort "$rds_guard_history_root/all-commits.raw" > "$rds_guard_history_root/all-commits"
+  sort "$rds_guard_history_root/branch-commits" > "$rds_guard_history_root/allowed-commits"
+  cmp "$rds_guard_history_root/allowed-commits" "$rds_guard_history_root/all-commits"
+  git log --all --format= --name-only > "$rds_guard_history_root/all-history-paths.raw"
+  awk 'NF' "$rds_guard_history_root/all-history-paths.raw" > "$rds_guard_history_root/all-history-paths.nonempty"
+  sort -u "$rds_guard_history_root/all-history-paths.nonempty" > "$rds_guard_history_root/all-history-paths"
+  sort -u "$rds_guard_allowed_paths_raw" > "$rds_guard_history_root/allowed-history-paths"
+  cmp "$rds_guard_history_root/allowed-history-paths" "$rds_guard_history_root/all-history-paths"
+  git rev-list --objects "${rds_guard_commits[@]}" > "$rds_guard_history_root/allowed-objects.raw"
+  sort "$rds_guard_history_root/allowed-objects.raw" > "$rds_guard_history_root/allowed-objects"
+  git rev-list --objects --all > "$rds_guard_history_root/all-objects.raw"
+  sort "$rds_guard_history_root/all-objects.raw" > "$rds_guard_history_root/all-objects"
+  cmp "$rds_guard_history_root/allowed-objects" "$rds_guard_history_root/all-objects"
+  rds_guard_remote_tip=$(git rev-parse HEAD)
+  if test "$rds_guard_phase" = 'plan-unpublished'; then
+    rds_guard_remote_tip=$(git rev-parse HEAD^)
+  fi
+  printf '%s\t%s\n' \
+    'refs/heads/bootstrap/rds-main' '9193123daad52fe028e68e204d8c409d169cf370' \
+    'refs/heads/neutral/v7.2.1-neutral.1' "$(git rev-parse HEAD)" \
+    'refs/remotes/origin/main' '9193123daad52fe028e68e204d8c409d169cf370' \
+    'refs/remotes/origin/neutral/v7.2.1-neutral.1' "$rds_guard_remote_tip" > "$rds_guard_history_root/allowed-refs.raw"
+  sort "$rds_guard_history_root/allowed-refs.raw" > "$rds_guard_history_root/allowed-refs"
+  git for-each-ref --format='%(refname)%09%(objectname)' refs/heads refs/remotes/origin > "$rds_guard_history_root/all-refs.raw"
+  sort "$rds_guard_history_root/all-refs.raw" > "$rds_guard_history_root/all-refs"
+  cmp "$rds_guard_history_root/allowed-refs" "$rds_guard_history_root/all-refs"
+  set +e
+  git cat-file -e "$rds_guard_upstream_sha^{commit}" > "$rds_guard_history_root/upstream-object.out" 2> "$rds_guard_history_root/upstream-object.err"
+  rds_guard_upstream_status=$?
+  set -e
+  test "$rds_guard_upstream_status" != '0'
+  test ! -s "$rds_guard_history_root/upstream-object.out"
+}
+BASH
+File.binwrite(path, bytes)
+RUBY
+rds_guard_sha='abd731e83194070da157fbb641582e61082afd5e26a9d8118956116eb2fa1de1'
+printf '%s  %s\n' "$rds_guard_sha" "$rds_guard_script" > "$rds_fixture_out/guard.sha256"
+shasum -a 256 -c "$rds_fixture_out/guard.sha256"
+. "$rds_guard_script"
+
+rds_expect_reject() {
+  rds_fixture_name=$1
+  shift
+  set +e
+  "$@"
+  rds_fixture_status=$?
+  set -e
+  test "$rds_fixture_status" != '0'
+  printf 'PASS guard=%s bad=rejected\n' "$rds_fixture_name" >> "$rds_fixture_out/summary"
+}
+
+: > "$rds_fixture_out/summary"
+rds_run_producer "$rds_fixture_out/producer-good.out" "$rds_fixture_out/producer-good.err" sh -c 'printf "complete\n"'
+rds_expect_reject producer-exit bash -c 'set -euo pipefail; . "$1"; rds_run_producer "$2" "$3" sh -c "exit 42"' _ "$rds_guard_script" "$rds_fixture_out/producer-bad.out" "$rds_fixture_out/producer-bad.err"
+rds_expect_reject producer-mid-read bash -c 'set -euo pipefail; . "$1"; rds_run_producer "$2" "$3" sh -c "printf partial\\n; exit 41"' _ "$rds_guard_script" "$rds_fixture_out/producer-mid.out" "$rds_fixture_out/producer-mid.err"
+rds_require_empty_producer "$rds_fixture_out/empty-good.out" "$rds_fixture_out/empty-good.err" sh -c 'exit 0'
+rds_expect_reject empty-producer-error bash -c 'set -euo pipefail; . "$1"; rds_require_empty_producer "$2" "$3" sh -c "printf partial\\n; printf fatal\\n >&2; exit 40"' _ "$rds_guard_script" "$rds_fixture_out/empty-bad.out" "$rds_fixture_out/empty-bad.err"
+
 mkdir -p "$rds_fixture_root/expected" "$rds_fixture_root/good"
 printf 'alpha\n' > "$rds_fixture_root/expected/a"
 printf 'beta\n' > "$rds_fixture_root/expected/b"
 cp -R "$rds_fixture_root/expected/." "$rds_fixture_root/good/"
 printf '%s\n' a b > "$rds_fixture_out/expected-paths"
-find "$rds_fixture_root/good" -type f -print > "$rds_fixture_out/good-paths.absolute"
-sed "s#^$rds_fixture_root/good/##" "$rds_fixture_out/good-paths.absolute" > "$rds_fixture_out/good-paths.unsorted"
-sort "$rds_fixture_out/good-paths.unsorted" > "$rds_fixture_out/good-paths"
-cmp "$rds_fixture_out/expected-paths" "$rds_fixture_out/good-paths"
-: > "$rds_fixture_out/expected-hashes"
-: > "$rds_fixture_out/good-hashes"
-while IFS= read -r rds_path; do
-  test -n "$rds_path"
-  (cd "$rds_fixture_root/expected" && shasum -a 256 "$rds_path") >> "$rds_fixture_out/expected-hashes"
-  (cd "$rds_fixture_root/good" && shasum -a 256 "$rds_path") >> "$rds_fixture_out/good-hashes"
-done < "$rds_fixture_out/expected-paths"
-cmp "$rds_fixture_out/expected-hashes" "$rds_fixture_out/good-hashes"
+cp "$rds_fixture_out/expected-paths" "$rds_fixture_out/good-paths"
+rds_require_path_hash_manifest "$rds_fixture_root/expected" "$rds_fixture_root/good" "$rds_fixture_out/expected-paths" "$rds_fixture_out/good-paths" "$rds_fixture_out/manifest-good"
 for rds_case in added removed mutated; do
   rds_case_root="$rds_fixture_root/$rds_case"
   mkdir "$rds_case_root"
   cp -R "$rds_fixture_root/good/." "$rds_case_root/"
+  cp "$rds_fixture_out/expected-paths" "$rds_fixture_out/$rds_case-paths"
   case "$rds_case" in
-    added) printf 'extra\n' > "$rds_case_root/c" ;;
-    removed) mv "$rds_case_root/b" "$rds_fixture_root/recoverable-removed-b" ;;
+    added) printf 'extra\n' > "$rds_case_root/c"; printf 'c\n' >> "$rds_fixture_out/$rds_case-paths" ;;
+    removed) mv "$rds_case_root/b" "$rds_fixture_root/recoverable-removed-b"; sed '/^b$/d' "$rds_fixture_out/expected-paths" > "$rds_fixture_out/$rds_case-paths" ;;
     mutated) printf 'changed\n' > "$rds_case_root/a" ;;
   esac
-  find "$rds_case_root" -type f -print > "$rds_fixture_out/$rds_case-paths.absolute"
-  sed "s#^$rds_case_root/##" "$rds_fixture_out/$rds_case-paths.absolute" > "$rds_fixture_out/$rds_case-paths.unsorted"
-  sort "$rds_fixture_out/$rds_case-paths.unsorted" > "$rds_fixture_out/$rds_case-paths"
-  if cmp -s "$rds_fixture_out/expected-paths" "$rds_fixture_out/$rds_case-paths"; then
-    : > "$rds_fixture_out/$rds_case-hashes"
-    while IFS= read -r rds_path; do
-      test -n "$rds_path"
-      (cd "$rds_case_root" && shasum -a 256 "$rds_path") >> "$rds_fixture_out/$rds_case-hashes"
-    done < "$rds_fixture_out/expected-paths"
-    if cmp -s "$rds_fixture_out/expected-hashes" "$rds_fixture_out/$rds_case-hashes"; then
-      exit 1
-    fi
-  fi
+  rds_expect_reject "manifest-$rds_case" bash -c 'set -euo pipefail; . "$1"; rds_require_path_hash_manifest "$2" "$3" "$4" "$5" "$6"' _ "$rds_guard_script" "$rds_fixture_root/expected" "$rds_case_root" "$rds_fixture_out/expected-paths" "$rds_fixture_out/$rds_case-paths" "$rds_fixture_out/manifest-$rds_case"
 done
-printf '%s\n' \
-  'wrappers/README.md|git::ssh://git@github.com/joeroberts/terraform-aws-rds.git//wrappers?ref=v7.2.1-neutral.1' \
-  'wrappers/db_instance/README.md|git::ssh://git@github.com/joeroberts/terraform-aws-rds.git//wrappers/db_instance?ref=v7.2.1-neutral.1' > "$rds_fixture_out/source-map"
-printf '%s\n' \
-  'wrappers/README.md|git::ssh://git@github.com/joeroberts/terraform-aws-rds.git//wrappers?ref=v7.2.1-neutral.1' \
-  'wrappers/db_instance/README.md|git::ssh://git@github.com/joeroberts/terraform-aws-rds.git//wrappers/db_option_group?ref=v7.2.1-neutral.1' > "$rds_fixture_out/wrong-source-map"
-if cmp -s "$rds_fixture_out/source-map" "$rds_fixture_out/wrong-source-map"; then
-  exit 1
-fi
-printf '%s\n' '<!-- Modified by joeroberts/terraform-aws-rds on 2026-08-12; see UPSTREAM.md. -->' > "$rds_fixture_out/expected-notice"
-printf '%s\n' '<!-- Modified by joeroberts/terraform-aws-rds on 2026-08-13; see UPSTREAM.md. -->' > "$rds_fixture_out/wrong-notice"
-if cmp -s "$rds_fixture_out/expected-notice" "$rds_fixture_out/wrong-notice"; then
-  exit 1
-fi
-git -C "$rds_fixture_repo" init --quiet
-printf 'clean\n' > "$rds_fixture_repo/tracked"
-git -C "$rds_fixture_repo" add tracked
-git -C "$rds_fixture_repo" -c user.name=Fixture -c user.email=fixture@example.invalid commit --quiet -m fixture
-printf 'untracked trailing  \n' > "$rds_fixture_repo/untracked"
-printf '%s\n' untracked > "$rds_fixture_out/untracked-worklist"
-set +e
-git -C "$rds_fixture_repo" diff --no-index --check /dev/null untracked > "$rds_fixture_out/untracked-whitespace.out" 2> "$rds_fixture_out/untracked-whitespace.err"
-rds_whitespace_status=$?
-set -e
-test "$rds_whitespace_status" != '1'
-test -s "$rds_fixture_out/untracked-whitespace.out"
-set +e
-rg -n 'never-match' "$rds_fixture_root/does-not-exist" > "$rds_fixture_out/rg-error.out" 2> "$rds_fixture_out/rg-error.err"
-rds_rg_status=$?
-set -e
-test "$rds_rg_status" -gt '1'
-test -s "$rds_fixture_out/rg-error.err"
-printf '%s\n' '{"state":"OPEN","base":"main","head":"neutral/v7.2.1-neutral.1","oid":"good"}' > "$rds_fixture_out/good-pr.json"
-printf '%s\n' '{"state":"OPEN","base":"release","head":"neutral/v7.2.1-neutral.1","oid":"good"}' > "$rds_fixture_out/wrong-pr.json"
-ruby -rjson - "$rds_fixture_out/good-pr.json" <<'RUBY'
-record = JSON.parse(File.read(ARGV.fetch(0)))
-abort "good PR rejected" unless record == { "state" => "OPEN", "base" => "main", "head" => "neutral/v7.2.1-neutral.1", "oid" => "good" }
+
+mkdir "$rds_fixture_root/whitespace-good" "$rds_fixture_root/whitespace-bad"
+printf 'clean\n' > "$rds_fixture_root/whitespace-good/file.txt"
+printf 'trailing \n' > "$rds_fixture_root/whitespace-bad/file.txt"
+printf '%s\n' file.txt > "$rds_fixture_out/whitespace-paths"
+(
+  cd "$rds_fixture_root/whitespace-good"
+  rds_validate_worklist_whitespace "$rds_fixture_out/whitespace-paths" "$rds_fixture_out/unused-readme" "$rds_fixture_out/whitespace-good"
+)
+rds_expect_reject untracked-whitespace bash -c 'set -euo pipefail; . "$1"; cd "$2"; rds_validate_worklist_whitespace "$3" "$4" "$5"' _ "$rds_guard_script" "$rds_fixture_root/whitespace-bad" "$rds_fixture_out/whitespace-paths" "$rds_fixture_out/unused-readme" "$rds_fixture_out/whitespace-bad"
+
+rds_consumer_good="$rds_fixture_root/consumer-good"
+rds_consumer_bad="$rds_fixture_root/consumer-bad"
+mkdir -p "$rds_consumer_good/wrappers" "$rds_consumer_bad"
+printf '%s\n' wrappers/README.md wrappers/a/README.md wrappers/b/README.md wrappers/c/README.md wrappers/d/README.md wrappers/e/README.md wrappers/f/README.md > "$rds_fixture_out/wrapper-list"
+ruby - "$rds_consumer_good" "$rds_fixture_out/wrapper-list" <<'RUBY'
+require "fileutils"
+root, list = ARGV
+notice = "<!-- Modified by joeroberts/terraform-aws-rds on 2026-08-12; see UPSTREAM.md. -->"
+File.binwrite(File.join(root, "README.md"), ([notice, 'source = "git::ssh://git@github.com/joeroberts/terraform-aws-rds.git?ref=v7.2.1-neutral.1"', 'source = "git::ssh://git@github.com/joeroberts/terraform-aws-rds.git?ref=v7.2.1-neutral.1"'].join("\n") + "\n"))
+File.readlines(list, chomp: true).each do |relative|
+  path = File.join(root, relative)
+  FileUtils.mkdir_p(File.dirname(path))
+  subpath = relative.delete_suffix("/README.md")
+  source = "git::ssh://git@github.com/joeroberts/terraform-aws-rds.git//#{subpath}?ref=v7.2.1-neutral.1"
+  File.binwrite(path, [notice, %(source = "#{source}"), %(source = "#{source}"), %(# source = "#{source}")].join("\n") + "\n")
+end
 RUBY
-if ruby -rjson - "$rds_fixture_out/wrong-pr.json" <<'RUBY'
-record = JSON.parse(File.read(ARGV.fetch(0)))
-abort "wrong PR context" unless record == { "state" => "OPEN", "base" => "main", "head" => "neutral/v7.2.1-neutral.1", "oid" => "good" }
-RUBY
-then
-  exit 1
-fi
-printf '%s\n' 'PASS failed-producer' 'PASS mid-read-failure' 'PASS added-path' 'PASS removed-path' 'PASS mutated-path' 'PASS wrong-source-subpath' 'PASS wrong-notice-bytes' 'PASS untracked-whitespace' 'PASS operational-rg-error' 'PASS wrong-pr-context' > "$rds_fixture_out/summary"
-test "$(awk 'END { print NR }' "$rds_fixture_out/summary")" = '10'
+cp -R "$rds_consumer_good/." "$rds_consumer_bad/"
+rds_validate_wrapper_sources "$rds_consumer_good" "$rds_fixture_out/wrapper-list"
+sed 's#//wrappers/a?ref=#//wrappers/f?ref=#' "$rds_consumer_bad/wrappers/a/README.md" > "$rds_fixture_out/wrong-source"
+mv "$rds_fixture_out/wrong-source" "$rds_consumer_bad/wrappers/a/README.md"
+rds_expect_reject wrapper-source-map bash -c 'set -euo pipefail; . "$1"; rds_validate_wrapper_sources "$2" "$3"' _ "$rds_guard_script" "$rds_consumer_bad" "$rds_fixture_out/wrapper-list"
+
+rds_notice_good="$rds_fixture_root/notice-good"
+rds_notice_bad="$rds_fixture_root/notice-bad"
+mkdir "$rds_notice_good" "$rds_notice_bad"
+: > "$rds_fixture_out/notice-paths"
+rds_notice_index=1
+while test "$rds_notice_index" -le '19'; do
+  if test "$rds_notice_index" -le '9'; then rds_notice_path="file-$rds_notice_index.md"; rds_notice_line='<!-- Modified by joeroberts/terraform-aws-rds on 2026-08-12; see UPSTREAM.md. -->'; else rds_notice_path="file-$rds_notice_index.tf"; rds_notice_line='# Modified by joeroberts/terraform-aws-rds on 2026-08-12; see UPSTREAM.md.'; fi
+  printf '%s\n' "$rds_notice_path" >> "$rds_fixture_out/notice-paths"
+  printf '%s\n' "$rds_notice_line" > "$rds_notice_good/$rds_notice_path"
+  printf '%s\n' "$rds_notice_line" > "$rds_notice_bad/$rds_notice_path"
+  rds_notice_index=$((rds_notice_index + 1))
+done
+rds_validate_notices "$rds_notice_good" "$rds_fixture_out/notice-paths"
+printf '%s\n' '<!-- Modified by joeroberts/terraform-aws-rds on 2026-08-13; see UPSTREAM.md. -->' > "$rds_notice_bad/file-1.md"
+rds_expect_reject notice-bytes bash -c 'set -euo pipefail; . "$1"; rds_validate_notices "$2" "$3"' _ "$rds_guard_script" "$rds_notice_bad" "$rds_fixture_out/notice-paths"
+
+printf 'safe\n' > "$rds_fixture_out/rg-input"
+rds_require_rg_no_match "$rds_fixture_out/rg-good.out" "$rds_fixture_out/rg-good.err" -n 'never-match' "$rds_fixture_out/rg-input"
+rds_expect_reject rg-operational-error bash -c 'set -euo pipefail; . "$1"; rds_require_rg_no_match "$2" "$3" -n never-match "$4"' _ "$rds_guard_script" "$rds_fixture_out/rg-bad.out" "$rds_fixture_out/rg-bad.err" "$rds_fixture_root/does-not-exist"
+
+printf '%s\n' 'https://github.com/joeroberts/terraform-aws-rds/pull/17' > "$rds_fixture_out/create-good"
+rds_parse_pr_create_url "$rds_fixture_out/create-good" "$rds_fixture_out/pr-number"
+test "$(sed -n '1p' "$rds_fixture_out/pr-number")" = '17'
+printf '%s\n' 'https://github.com/another/repository/pull/17' > "$rds_fixture_out/create-bad"
+rds_expect_reject pr-create-url bash -c 'set -euo pipefail; . "$1"; rds_parse_pr_create_url "$2" "$3"' _ "$rds_guard_script" "$rds_fixture_out/create-bad" "$rds_fixture_out/pr-number-bad"
+printf 'https://github.com/joeroberts/terraform-aws-rds/pull/17\t17\tOPEN\tmain\tneutral/v7.2.1-neutral.1\tgood-head\tfeat: Add neutral RDS module v7.2.1\n' > "$rds_fixture_out/readback-good"
+rds_validate_pr_readback "$rds_fixture_out/readback-good" 'https://github.com/joeroberts/terraform-aws-rds/pull/17' '17' 'neutral/v7.2.1-neutral.1' 'good-head' 'feat: Add neutral RDS module v7.2.1'
+sed $'s/\tmain\t/\trelease\t/' "$rds_fixture_out/readback-good" > "$rds_fixture_out/readback-bad"
+rds_expect_reject pr-readback-context bash -c 'set -euo pipefail; . "$1"; rds_validate_pr_readback "$2" "$3" "$4" "$5" "$6" "$7"' _ "$rds_guard_script" "$rds_fixture_out/readback-bad" 'https://github.com/joeroberts/terraform-aws-rds/pull/17' '17' 'neutral/v7.2.1-neutral.1' 'good-head' 'feat: Add neutral RDS module v7.2.1'
+
+rds_marker_root="$rds_fixture_root/marker"
+rds_old_run='20260813T010101Z-1-1'
+rds_new_run='20260813T020202Z-2-2'
+mkdir -p "$rds_marker_root/task4-runs/$rds_old_run"
+printf 'RUN run=%s head=old-head\nFINAL PASS run=%s head=old-head\n' "$rds_old_run" "$rds_old_run" > "$rds_marker_root/task4-active-log"
+printf '%s\n' '{"schema":1,"result":"PASS","run_id":"20260813T010101Z-1-1","head":"old-head","log_sha256":"sentinel"}' > "$rds_marker_root/task4-active-result.json"
+cp "$rds_marker_root/task4-active-result.json" "$rds_marker_root/task4-active-marker.json"
+rds_prepare_task4_run "$rds_marker_root" "$rds_new_run"
+test ! -e "$rds_marker_root/task4-active-marker.json"
+test -f "$rds_marker_root/task4-quarantine/$rds_new_run/task4-active-marker.json"
+rds_expect_reject task4-early-failure bash -c 'set -euo pipefail; . "$1"; rds_validate_task4_result "$2" new-head' _ "$rds_guard_script" "$rds_marker_root"
+printf 'RUN run=%s head=new-head\nFINAL PASS run=%s head=new-head\n' "$rds_new_run" "$rds_new_run" > "$rds_marker_root/task4-runs/$rds_new_run/validation.log"
+rds_publish_task4_result "$rds_marker_root" "$rds_new_run" 'new-head' "$rds_marker_root/task4-runs/$rds_new_run/validation.log"
+rds_run_producer "$rds_fixture_out/marker-run-id" "$rds_fixture_out/marker.err" rds_validate_task4_result "$rds_marker_root" 'new-head'
+test "$(sed -n '1p' "$rds_fixture_out/marker-run-id")" = "$rds_new_run"
+printf 'corrupt\n' >> "$rds_marker_root/task4-active-log"
+rds_expect_reject task4-log-binding bash -c 'set -euo pipefail; . "$1"; rds_validate_task4_result "$2" new-head' _ "$rds_guard_script" "$rds_marker_root"
+
+test "$(awk 'END { print NR }' "$rds_fixture_out/summary")" = '14'
 cat "$rds_fixture_out/summary"
 ```
 
-Expected: all ten adversarial cases are rejected and the ten-line PASS summary is preserved. The removed-path fixture uses a recoverable move inside the fixture root; no destructive cleanup occurs.
+Expected: the exact production library digest passes; every good input is accepted; all 14 named bad guard cases are rejected, including partial producer output, each manifest variance, untracked trailing whitespace, actual wrapper/notice/PR validators, `rg` status greater than 1, stale-marker early failure, and post-publication log mutation. No label claims coverage for a guard that was not invoked.
