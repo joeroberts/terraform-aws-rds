@@ -6,6 +6,7 @@
 - The implementation plan has been comprehensively amended with fail-closed import, parity, generation, workflow, pre-commit, validation, review, PR, and campaign-journal gates.
 - Review fix round 1 closes exact-history allowlisting, fresh-run Task 4 result binding, shared production-guard fixtures, and producer-status handling; no execution task has started.
 - Review fix round 2 closes all-namespace live-ref enumeration and exact successful missing-object protocol validation while preserving every round-1 guard; no execution task has started.
+- Review fix round 3 closes exact whole-line direct-expression absence/cardinality checks after the correct Bash Task 1 retry exposed a substring false positive; the retry left the target/index clean and imported no source.
 - This planning amendment is the only completed work. Task 1 has not started and no upstream source has been imported into this worktree.
 - No RDS pull request, reserved tag `v7.2.1-neutral.1`, or release exists. Do not create any of them while committing this planning-only amendment.
 - Execution may begin only after the exact two-document planning amendment is normally committed, pushed, fetched, and read back on the synchronized branch.

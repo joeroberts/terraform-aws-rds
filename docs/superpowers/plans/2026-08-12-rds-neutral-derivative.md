@@ -50,7 +50,7 @@ rds_base='ffa16b253e97aa8d15177ba71febbac75bf8cc2c'
 rds_gate=$(mktemp -d /private/tmp/rds-task0-publication.XXXXXX)
 rds_durable='.superpowers/sdd/2026-08-12-rds-neutral-derivative'
 rds_guard_script="$rds_durable/production-guards.bash"
-rds_guard_sha='119edadd58e66d1e680d5b393ecb5b14520614fe0773367772e880a0533f7b68'
+rds_guard_sha='9ebe1644a5c5e2f232b320e991e4a60a80f94dcdbbc58e8d0a8c43ff42b80aca'
 printf '%s  %s\n' "$rds_guard_sha" "$rds_guard_script" > "$rds_gate/guard.sha256"
 shasum -a 256 -c "$rds_gate/guard.sha256"
 . "$rds_guard_script"
@@ -108,7 +108,7 @@ rds_expected="$rds_task_root/independent-expected"
 rds_evidence="$rds_task_root/evidence"
 rds_durable='.superpowers/sdd/2026-08-12-rds-neutral-derivative'
 rds_guard_script="$rds_durable/production-guards.bash"
-rds_guard_sha='119edadd58e66d1e680d5b393ecb5b14520614fe0773367772e880a0533f7b68'
+rds_guard_sha='9ebe1644a5c5e2f232b320e991e4a60a80f94dcdbbc58e8d0a8c43ff42b80aca'
 mkdir -p "$rds_pristine" "$rds_sanitized" "$rds_expected" "$rds_evidence"
 printf '%s  %s\n' "$rds_guard_sha" "$rds_guard_script" > "$rds_evidence/guard.sha256"
 shasum -a 256 -c "$rds_evidence/guard.sha256"
@@ -193,18 +193,7 @@ set -e
 test "$rds_rg_status" = '0'
 test -s "$rds_evidence/pristine-neutral-matches"
 test ! -s "$rds_evidence/pristine-neutral.err"
-for rds_direct in \
-  'create_db_subnet_group    = var.create_db_subnet_group' \
-  'create_db_parameter_group = var.create_db_parameter_group' \
-  'create_db_instance        = var.create_db_instance'; do
-  set +e
-  rg -n -F "$rds_direct" "$rds_pristine/main.tf" > "$rds_evidence/pristine-direct" 2> "$rds_evidence/pristine-direct.err"
-  rds_rg_status=$?
-  set -e
-  test "$rds_rg_status" = '1'
-  test ! -s "$rds_evidence/pristine-direct"
-  test ! -s "$rds_evidence/pristine-direct.err"
-done
+rds_validate_direct_expressions absent "$rds_pristine/main.tf" "$rds_evidence/pristine-direct"
 ruby - "$rds_sanitized" <<'RUBY'
 root = ARGV.fetch(0)
 notice = "Modified by joeroberts/terraform-aws-rds on 2026-08-12; see UPSTREAM.md."
@@ -303,18 +292,7 @@ while IFS= read -r rds_path; do
 done < "$rds_evidence/upstream-paths"
 sort "$rds_evidence/actual-task1-deltas.raw" > "$rds_evidence/actual-task1-deltas"
 cmp "$rds_evidence/expected-task1-deltas" "$rds_evidence/actual-task1-deltas"
-for rds_direct in \
-  'create_db_subnet_group    = var.create_db_subnet_group' \
-  'create_db_parameter_group = var.create_db_parameter_group' \
-  'create_db_instance        = var.create_db_instance'; do
-  set +e
-  rg -n -F "$rds_direct" "$rds_expected/main.tf" > "$rds_evidence/direct-match" 2> "$rds_evidence/direct-match.err"
-  rds_rg_status=$?
-  set -e
-  test "$rds_rg_status" = '0'
-  test "$(awk 'END { print NR }' "$rds_evidence/direct-match")" = '1'
-  test ! -s "$rds_evidence/direct-match.err"
-done
+rds_validate_direct_expressions exact "$rds_expected/main.tf" "$rds_evidence/direct-match"
 set +e
 rg -n -i "$rds_neutral_pattern" "$rds_expected" --hidden > "$rds_evidence/sanitized-neutral" 2> "$rds_evidence/sanitized-neutral.err"
 rds_rg_status=$?
@@ -403,7 +381,7 @@ rds_pristine="$rds_task_root/pristine"
 rds_evidence="$rds_task_root/evidence"
 rds_durable='.superpowers/sdd/2026-08-12-rds-neutral-derivative'
 rds_guard_script="$rds_durable/production-guards.bash"
-rds_guard_sha='119edadd58e66d1e680d5b393ecb5b14520614fe0773367772e880a0533f7b68'
+rds_guard_sha='9ebe1644a5c5e2f232b320e991e4a60a80f94dcdbbc58e8d0a8c43ff42b80aca'
 mkdir -p "$rds_pristine" "$rds_evidence"
 printf '%s  %s\n' "$rds_guard_sha" "$rds_guard_script" > "$rds_evidence/guard.sha256"
 shasum -a 256 -c "$rds_evidence/guard.sha256"
@@ -672,7 +650,7 @@ rds_evidence="$rds_task_root/evidence"
 rds_clone="$rds_task_root/verified-upstream"
 rds_durable='.superpowers/sdd/2026-08-12-rds-neutral-derivative'
 rds_guard_script="$rds_durable/production-guards.bash"
-rds_guard_sha='119edadd58e66d1e680d5b393ecb5b14520614fe0773367772e880a0533f7b68'
+rds_guard_sha='9ebe1644a5c5e2f232b320e991e4a60a80f94dcdbbc58e8d0a8c43ff42b80aca'
 mkdir -p "$rds_evidence/refs"
 printf '%s  %s\n' "$rds_guard_sha" "$rds_guard_script" > "$rds_evidence/guard.sha256"
 shasum -a 256 -c "$rds_evidence/guard.sha256"
@@ -981,7 +959,7 @@ rds_run_root="$rds_durable/task4-runs/$rds_run_id"
 rds_evidence="$rds_run_root/evidence"
 rds_validation_log="$rds_run_root/validation.log"
 rds_guard_script="$rds_durable/production-guards.bash"
-rds_guard_sha='119edadd58e66d1e680d5b393ecb5b14520614fe0773367772e880a0533f7b68'
+rds_guard_sha='9ebe1644a5c5e2f232b320e991e4a60a80f94dcdbbc58e8d0a8c43ff42b80aca'
 mkdir -p "$rds_pristine" "$rds_expected" "$rds_durable"
 rds_prepare_out="$rds_task_root/task4-prepare.out"
 rds_current_tmp="$rds_durable/.task4-current-$rds_run_id.tmp"
@@ -1491,7 +1469,7 @@ rds_task_root=$(mktemp -d /private/tmp/rds-task5-pr.XXXXXX)
 rds_evidence="$rds_task_root/evidence"
 rds_durable='.superpowers/sdd/2026-08-12-rds-neutral-derivative'
 rds_guard_script="$rds_durable/production-guards.bash"
-rds_guard_sha='119edadd58e66d1e680d5b393ecb5b14520614fe0773367772e880a0533f7b68'
+rds_guard_sha='9ebe1644a5c5e2f232b320e991e4a60a80f94dcdbbc58e8d0a8c43ff42b80aca'
 rds_whole_review="$rds_durable/task5-whole-branch-review.md"
 rds_scoped_review="$rds_durable/task5-scoped-rereview.md"
 rds_pr_body="$rds_task_root/pr-body.md"
@@ -1823,6 +1801,44 @@ rds_require_rg_no_match() {
   test ! -s "$rds_guard_stderr"
 }
 
+rds_validate_direct_expressions() {
+  rds_guard_direct_mode=$1
+  rds_guard_direct_path=$2
+  rds_guard_direct_root=$3
+  mkdir -p "$rds_guard_direct_root"
+  printf '%s\n' \
+    '  create_db_subnet_group    = var.create_db_subnet_group' \
+    '  create_db_parameter_group = var.create_db_parameter_group' \
+    '  create_db_instance        = var.create_db_instance' > "$rds_guard_direct_root/expected-lines"
+  : > "$rds_guard_direct_root/matches"
+  : > "$rds_guard_direct_root/matches.err"
+  while IFS= read -r rds_guard_direct; do
+    test -n "$rds_guard_direct"
+    set +e
+    rg -n -x -F "$rds_guard_direct" "$rds_guard_direct_path" > "$rds_guard_direct_root/one.out" 2> "$rds_guard_direct_root/one.err"
+    rds_guard_direct_status=$?
+    set -e
+    test ! -s "$rds_guard_direct_root/one.err"
+    case "$rds_guard_direct_mode" in
+      absent)
+        test "$rds_guard_direct_status" = '1'
+        test ! -s "$rds_guard_direct_root/one.out"
+        ;;
+      exact)
+        test "$rds_guard_direct_status" = '0'
+        test "$(awk 'END { print NR }' "$rds_guard_direct_root/one.out")" = '1'
+        cat "$rds_guard_direct_root/one.out" >> "$rds_guard_direct_root/matches"
+        ;;
+      *) return 1 ;;
+    esac
+  done < "$rds_guard_direct_root/expected-lines"
+  case "$rds_guard_direct_mode" in
+    absent) test ! -s "$rds_guard_direct_root/matches" ;;
+    exact) test "$(awk 'END { print NR }' "$rds_guard_direct_root/matches")" = '3' ;;
+  esac
+  test ! -s "$rds_guard_direct_root/matches.err"
+}
+
 rds_parse_pr_create_url() {
   rds_guard_create_output=$1
   rds_guard_number_output=$2
@@ -2144,7 +2160,7 @@ rds_validate_history() {
 BASH
 File.binwrite(path, bytes)
 RUBY
-rds_guard_sha='119edadd58e66d1e680d5b393ecb5b14520614fe0773367772e880a0533f7b68'
+rds_guard_sha='9ebe1644a5c5e2f232b320e991e4a60a80f94dcdbbc58e8d0a8c43ff42b80aca'
 printf '%s  %s\n' "$rds_guard_sha" "$rds_guard_script" > "$rds_fixture_out/guard.sha256"
 shasum -a 256 -c "$rds_fixture_out/guard.sha256"
 . "$rds_guard_script"
@@ -2235,6 +2251,28 @@ done
 rds_validate_notices "$rds_notice_good" "$rds_fixture_out/notice-paths"
 printf '%s\n' '<!-- Modified by joeroberts/terraform-aws-rds on 2026-08-13; see UPSTREAM.md. -->' > "$rds_notice_bad/file-1.md"
 rds_expect_reject notice-bytes bash -c 'set -euo pipefail; . "$1"; rds_validate_notices "$2" "$3"' _ "$rds_guard_script" "$rds_notice_bad" "$rds_fixture_out/notice-paths"
+
+printf '%s\n' \
+  '  create_db_subnet_group    = var.create_db_subnet_group && var.putin_khuylo' \
+  '  create_db_parameter_group = var.create_db_parameter_group && var.putin_khuylo' \
+  '  create_db_instance        = var.create_db_instance && var.putin_khuylo' > "$rds_fixture_out/direct-pristine-good.tf"
+rds_validate_direct_expressions absent "$rds_fixture_out/direct-pristine-good.tf" "$rds_fixture_out/direct-pristine-good"
+printf 'PASS guard=direct-pristine-absence good=accepted\n' >> "$rds_fixture_out/summary"
+cp "$rds_fixture_out/direct-pristine-good.tf" "$rds_fixture_out/direct-pristine-bad.tf"
+printf '%s\n' '  create_db_instance        = var.create_db_instance' >> "$rds_fixture_out/direct-pristine-bad.tf"
+rds_expect_reject direct-pristine-exact-present /bin/bash -c 'set -euo pipefail; . "$1"; rds_validate_direct_expressions absent "$2" "$3"' _ "$rds_guard_script" "$rds_fixture_out/direct-pristine-bad.tf" "$rds_fixture_out/direct-pristine-bad"
+
+printf '%s\n' \
+  '  create_db_subnet_group    = var.create_db_subnet_group' \
+  '  create_db_parameter_group = var.create_db_parameter_group' \
+  '  create_db_instance        = var.create_db_instance' > "$rds_fixture_out/direct-sanitized-good.tf"
+rds_validate_direct_expressions exact "$rds_fixture_out/direct-sanitized-good.tf" "$rds_fixture_out/direct-sanitized-good"
+printf 'PASS guard=direct-sanitized-exact good=accepted\n' >> "$rds_fixture_out/summary"
+printf '%s\n' \
+  'prefix  create_db_subnet_group    = var.create_db_subnet_group' \
+  '  create_db_parameter_group = var.create_db_parameter_group suffix' \
+  '  create_db_instance        = var.create_db_instance' > "$rds_fixture_out/direct-sanitized-bad.tf"
+rds_expect_reject direct-sanitized-prefix-suffix /bin/bash -c 'set -euo pipefail; . "$1"; rds_validate_direct_expressions exact "$2" "$3"' _ "$rds_guard_script" "$rds_fixture_out/direct-sanitized-bad.tf" "$rds_fixture_out/direct-sanitized-bad"
 
 printf 'safe\n' > "$rds_fixture_out/rg-input"
 rds_require_rg_no_match "$rds_fixture_out/rg-good.out" "$rds_fixture_out/rg-good.err" -n 'never-match' "$rds_fixture_out/rg-input"
@@ -2327,8 +2365,8 @@ RUBY
 rds_expect_reject missing-object-operational /usr/bin/env RDS_FIXTURE_CAT_MODE=operational PATH="$rds_fake_git_dir:$PATH" /bin/bash -c 'set -euo pipefail; cd "$1"; . "$2"; rds_validate_history "$3" plan-unpublished - "$4" "$5" "$5" "$5" "$5"' _ "$rds_history_good" "$rds_guard_script_abs" "$rds_fixture_out/history-cat-operational-result" '9920097a40175c084c46fee1c306fa61cdbaf823' "$rds_fixture_out/history-unused-scope"
 rds_expect_reject missing-object-malformed /usr/bin/env RDS_FIXTURE_CAT_MODE=malformed PATH="$rds_fake_git_dir:$PATH" /bin/bash -c 'set -euo pipefail; cd "$1"; . "$2"; rds_validate_history "$3" plan-unpublished - "$4" "$5" "$5" "$5" "$5"' _ "$rds_history_good" "$rds_guard_script_abs" "$rds_fixture_out/history-cat-malformed-result" '9920097a40175c084c46fee1c306fa61cdbaf823' "$rds_fixture_out/history-unused-scope"
 
-test "$(awk 'END { print NR }' "$rds_fixture_out/summary")" = '20'
+test "$(awk 'END { print NR }' "$rds_fixture_out/summary")" = '24'
 cat "$rds_fixture_out/summary"
 ```
 
-Expected: the exact production library digest passes; both named good history/object cases are accepted; all 18 named bad guard cases are rejected. The original 14 rejections remain, and the exact shared history guard additionally rejects a lightweight tag, a nonstandard ref, an operational `cat-file --batch-check` failure, and malformed batch output. No label claims coverage for a guard that was not invoked.
+Expected: the exact production library digest passes; all four named good cases are accepted and all 20 named bad guard cases are rejected. The round-2 18 rejections remain. Exact direct-expression fixtures additionally accept pristine suffixed upstream lines as absence, reject a pristine exact direct line, accept exactly one of each sanitized whole line, and reject sanitized prefix/suffix mutations. No label claims coverage for a guard that was not invoked.
