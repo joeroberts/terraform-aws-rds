@@ -24,7 +24,7 @@
 - Resolve the root `.git` entry whether file or directory. Exclude only the exact root `.git`, exact root `.superpowers/`, and exact tracked plan/status paths where required; never hide nested paths with the same names. A pre-stage gate must include untracked paths and whitespace-check the exact worklist. A terminal-blank exception is allowed only for a named path whose bytes equal its independently retained expected transform, and may disable only `blank-at-eof`.
 - Every dispatch creates a fresh task-owned upstream clone/archive/runtime. Never infer or reuse another task's scratch root. Do not require destructive cleanup; leave retained evidence in its task-owned temporary root or move a validated task-created artifact to a recoverable quarantine.
 - Before Task 0, materialize and exercise the exact ignored production guard library at `.superpowers/sdd/2026-08-12-rds-neutral-derivative/production-guards.bash`; every consuming fence requires its exact SHA-256 and sources that same file. A copied or reimplemented stand-in is not evidence.
-- History is one exact linear state machine: fixed bootstrap/planning prefix, a gapless prefix of explicitly named plan-review rounds 1 through 5, Task 1, Task 2, Task 3, and at most one explicitly named consolidated independent-review fix. Every commit has its exact parent, subject, and allowed path/status scope validated; every live ref, history path, and reachable object is compared with the allowed manifests. Merges and imported upstream ancestry are forbidden.
+- History is one exact linear state machine: fixed bootstrap/planning prefix, a gapless prefix of explicitly named plan-review rounds 1 through 5, Task 1, Task 2, Task 3, and at most one explicitly named consolidated independent-review fix. Every commit has its exact parent, subject, and allowed path/status scope validated; every live ref in every namespace, remote/branch configuration, history path, and reachable object is compared with the allowed manifests. The fixed upstream object-absence check uses a successful exact `git cat-file --batch-check` missing response, never generic nonzero status. Merges and imported upstream ancestry are forbidden.
 - Push milestones normally without force. Task 5 may create one PR only after independent review and complete fresh verification. Never merge or create a tag/release. IAM may be touched only in Task 5, only at its exact rooted campaign journal after all stated gates.
 
 ## File Map
@@ -50,7 +50,7 @@ rds_base='ffa16b253e97aa8d15177ba71febbac75bf8cc2c'
 rds_gate=$(mktemp -d /private/tmp/rds-task0-publication.XXXXXX)
 rds_durable='.superpowers/sdd/2026-08-12-rds-neutral-derivative'
 rds_guard_script="$rds_durable/production-guards.bash"
-rds_guard_sha='abd731e83194070da157fbb641582e61082afd5e26a9d8118956116eb2fa1de1'
+rds_guard_sha='119edadd58e66d1e680d5b393ecb5b14520614fe0773367772e880a0533f7b68'
 printf '%s  %s\n' "$rds_guard_sha" "$rds_guard_script" > "$rds_gate/guard.sha256"
 shasum -a 256 -c "$rds_gate/guard.sha256"
 . "$rds_guard_script"
@@ -108,7 +108,7 @@ rds_expected="$rds_task_root/independent-expected"
 rds_evidence="$rds_task_root/evidence"
 rds_durable='.superpowers/sdd/2026-08-12-rds-neutral-derivative'
 rds_guard_script="$rds_durable/production-guards.bash"
-rds_guard_sha='abd731e83194070da157fbb641582e61082afd5e26a9d8118956116eb2fa1de1'
+rds_guard_sha='119edadd58e66d1e680d5b393ecb5b14520614fe0773367772e880a0533f7b68'
 mkdir -p "$rds_pristine" "$rds_sanitized" "$rds_expected" "$rds_evidence"
 printf '%s  %s\n' "$rds_guard_sha" "$rds_guard_script" > "$rds_evidence/guard.sha256"
 shasum -a 256 -c "$rds_evidence/guard.sha256"
@@ -403,7 +403,7 @@ rds_pristine="$rds_task_root/pristine"
 rds_evidence="$rds_task_root/evidence"
 rds_durable='.superpowers/sdd/2026-08-12-rds-neutral-derivative'
 rds_guard_script="$rds_durable/production-guards.bash"
-rds_guard_sha='abd731e83194070da157fbb641582e61082afd5e26a9d8118956116eb2fa1de1'
+rds_guard_sha='119edadd58e66d1e680d5b393ecb5b14520614fe0773367772e880a0533f7b68'
 mkdir -p "$rds_pristine" "$rds_evidence"
 printf '%s  %s\n' "$rds_guard_sha" "$rds_guard_script" > "$rds_evidence/guard.sha256"
 shasum -a 256 -c "$rds_evidence/guard.sha256"
@@ -672,7 +672,7 @@ rds_evidence="$rds_task_root/evidence"
 rds_clone="$rds_task_root/verified-upstream"
 rds_durable='.superpowers/sdd/2026-08-12-rds-neutral-derivative'
 rds_guard_script="$rds_durable/production-guards.bash"
-rds_guard_sha='abd731e83194070da157fbb641582e61082afd5e26a9d8118956116eb2fa1de1'
+rds_guard_sha='119edadd58e66d1e680d5b393ecb5b14520614fe0773367772e880a0533f7b68'
 mkdir -p "$rds_evidence/refs"
 printf '%s  %s\n' "$rds_guard_sha" "$rds_guard_script" > "$rds_evidence/guard.sha256"
 shasum -a 256 -c "$rds_evidence/guard.sha256"
@@ -981,7 +981,7 @@ rds_run_root="$rds_durable/task4-runs/$rds_run_id"
 rds_evidence="$rds_run_root/evidence"
 rds_validation_log="$rds_run_root/validation.log"
 rds_guard_script="$rds_durable/production-guards.bash"
-rds_guard_sha='abd731e83194070da157fbb641582e61082afd5e26a9d8118956116eb2fa1de1'
+rds_guard_sha='119edadd58e66d1e680d5b393ecb5b14520614fe0773367772e880a0533f7b68'
 mkdir -p "$rds_pristine" "$rds_expected" "$rds_durable"
 rds_prepare_out="$rds_task_root/task4-prepare.out"
 rds_current_tmp="$rds_durable/.task4-current-$rds_run_id.tmp"
@@ -1491,7 +1491,7 @@ rds_task_root=$(mktemp -d /private/tmp/rds-task5-pr.XXXXXX)
 rds_evidence="$rds_task_root/evidence"
 rds_durable='.superpowers/sdd/2026-08-12-rds-neutral-derivative'
 rds_guard_script="$rds_durable/production-guards.bash"
-rds_guard_sha='abd731e83194070da157fbb641582e61082afd5e26a9d8118956116eb2fa1de1'
+rds_guard_sha='119edadd58e66d1e680d5b393ecb5b14520614fe0773367772e880a0533f7b68'
 rds_whole_review="$rds_durable/task5-whole-branch-review.md"
 rds_scoped_review="$rds_durable/task5-scoped-rereview.md"
 rds_pr_body="$rds_task_root/pr-body.md"
@@ -1678,6 +1678,10 @@ rds_fixture_out="$rds_fixture_root/output"
 rds_durable='.superpowers/sdd/2026-08-12-rds-neutral-derivative'
 rds_guard_script="$rds_durable/production-guards.bash"
 mkdir -p "$rds_fixture_out" "$rds_durable"
+pwd -P > "$rds_fixture_out/worktree-root"
+test -s "$rds_fixture_out/worktree-root"
+IFS= read -r rds_fixture_worktree < "$rds_fixture_out/worktree-root"
+rds_guard_script_abs="$rds_fixture_worktree/$rds_guard_script"
 ruby - "$rds_guard_script" <<'RUBY'
 path = ARGV.fetch(0)
 bytes = <<'BASH'
@@ -1928,6 +1932,72 @@ puts run_id
 RUBY_GUARD
 }
 
+rds_validate_exact_ref_state() {
+  rds_guard_ref_root=$1
+  rds_guard_ref_phase=$2
+  mkdir -p "$rds_guard_ref_root"
+  rds_run_producer "$rds_guard_ref_root/head.out" "$rds_guard_ref_root/head.err" git rev-parse HEAD
+  test ! -s "$rds_guard_ref_root/head.err"
+  test "$(awk 'END { print NR }' "$rds_guard_ref_root/head.out")" = '1'
+  IFS= read -r rds_guard_local_tip < "$rds_guard_ref_root/head.out"
+  case "$rds_guard_local_tip" in ''|*[!0-9a-f]*) return 1 ;; esac
+  test "${#rds_guard_local_tip}" = '40'
+  rds_guard_remote_tip=$rds_guard_local_tip
+  if test "$rds_guard_ref_phase" = 'plan-unpublished'; then
+    rds_run_producer "$rds_guard_ref_root/parent.out" "$rds_guard_ref_root/parent.err" git rev-parse HEAD^
+    test ! -s "$rds_guard_ref_root/parent.err"
+    test "$(awk 'END { print NR }' "$rds_guard_ref_root/parent.out")" = '1'
+    IFS= read -r rds_guard_remote_tip < "$rds_guard_ref_root/parent.out"
+  fi
+  case "$rds_guard_remote_tip" in ''|*[!0-9a-f]*) return 1 ;; esac
+  test "${#rds_guard_remote_tip}" = '40'
+  printf '%s\t%s\t%s\n' \
+    'refs/heads/bootstrap/rds-main' '9193123daad52fe028e68e204d8c409d169cf370' commit \
+    'refs/heads/neutral/v7.2.1-neutral.1' "$rds_guard_local_tip" commit \
+    'refs/remotes/origin/main' '9193123daad52fe028e68e204d8c409d169cf370' commit \
+    'refs/remotes/origin/neutral/v7.2.1-neutral.1' "$rds_guard_remote_tip" commit > "$rds_guard_ref_root/allowed-refs.raw"
+  sort "$rds_guard_ref_root/allowed-refs.raw" > "$rds_guard_ref_root/allowed-refs"
+  rds_run_producer "$rds_guard_ref_root/all-refs.raw" "$rds_guard_ref_root/all-refs.err" git for-each-ref --format='%(refname)%09%(objectname)%09%(objecttype)'
+  test ! -s "$rds_guard_ref_root/all-refs.err"
+  test -s "$rds_guard_ref_root/all-refs.raw"
+  sort "$rds_guard_ref_root/all-refs.raw" > "$rds_guard_ref_root/all-refs"
+  cmp "$rds_guard_ref_root/allowed-refs" "$rds_guard_ref_root/all-refs"
+  printf '%s\n' \
+    'branch.main.merge refs/heads/main' \
+    'branch.main.remote origin' \
+    'branch.neutral/v7.2.1-neutral.1.merge refs/heads/neutral/v7.2.1-neutral.1' \
+    'branch.neutral/v7.2.1-neutral.1.remote origin' \
+    'remote.origin.fetch +refs/heads/*:refs/remotes/origin/*' \
+    'remote.origin.url git@github.com:joeroberts/terraform-aws-rds.git' > "$rds_guard_ref_root/allowed-remote-config.raw"
+  sort "$rds_guard_ref_root/allowed-remote-config.raw" > "$rds_guard_ref_root/allowed-remote-config"
+  rds_run_producer "$rds_guard_ref_root/all-remote-config.raw" "$rds_guard_ref_root/all-remote-config.err" git config --local --get-regexp '^(remote\.|branch\.)'
+  test ! -s "$rds_guard_ref_root/all-remote-config.err"
+  test -s "$rds_guard_ref_root/all-remote-config.raw"
+  sort "$rds_guard_ref_root/all-remote-config.raw" > "$rds_guard_ref_root/all-remote-config"
+  cmp "$rds_guard_ref_root/allowed-remote-config" "$rds_guard_ref_root/all-remote-config"
+  rds_run_producer "$rds_guard_ref_root/upstream.out" "$rds_guard_ref_root/upstream.err" git rev-parse --abbrev-ref --symbolic-full-name '@{upstream}'
+  test ! -s "$rds_guard_ref_root/upstream.err"
+  printf '%s\n' 'origin/neutral/v7.2.1-neutral.1' > "$rds_guard_ref_root/expected-upstream"
+  cmp "$rds_guard_ref_root/expected-upstream" "$rds_guard_ref_root/upstream.out"
+}
+
+rds_require_missing_object() {
+  rds_guard_missing_root=$1
+  rds_guard_missing_sha=$2
+  mkdir -p "$rds_guard_missing_root"
+  case "$rds_guard_missing_sha" in ''|*[!0-9a-f]*) return 1 ;; esac
+  test "${#rds_guard_missing_sha}" = '40'
+  printf '%s\n' "$rds_guard_missing_sha" > "$rds_guard_missing_root/query"
+  set +e
+  git cat-file --batch-check < "$rds_guard_missing_root/query" > "$rds_guard_missing_root/result.out" 2> "$rds_guard_missing_root/result.err"
+  rds_guard_missing_status=$?
+  set -e
+  test "$rds_guard_missing_status" = '0'
+  test ! -s "$rds_guard_missing_root/result.err"
+  printf '%s missing\n' "$rds_guard_missing_sha" > "$rds_guard_missing_root/expected.out"
+  cmp "$rds_guard_missing_root/expected.out" "$rds_guard_missing_root/result.out"
+}
+
 rds_history_expect_commit() {
   rds_guard_commit=$1
   rds_guard_parent=$2
@@ -2068,30 +2138,13 @@ rds_validate_history() {
   git rev-list --objects --all > "$rds_guard_history_root/all-objects.raw"
   sort "$rds_guard_history_root/all-objects.raw" > "$rds_guard_history_root/all-objects"
   cmp "$rds_guard_history_root/allowed-objects" "$rds_guard_history_root/all-objects"
-  rds_guard_remote_tip=$(git rev-parse HEAD)
-  if test "$rds_guard_phase" = 'plan-unpublished'; then
-    rds_guard_remote_tip=$(git rev-parse HEAD^)
-  fi
-  printf '%s\t%s\n' \
-    'refs/heads/bootstrap/rds-main' '9193123daad52fe028e68e204d8c409d169cf370' \
-    'refs/heads/neutral/v7.2.1-neutral.1' "$(git rev-parse HEAD)" \
-    'refs/remotes/origin/main' '9193123daad52fe028e68e204d8c409d169cf370' \
-    'refs/remotes/origin/neutral/v7.2.1-neutral.1' "$rds_guard_remote_tip" > "$rds_guard_history_root/allowed-refs.raw"
-  sort "$rds_guard_history_root/allowed-refs.raw" > "$rds_guard_history_root/allowed-refs"
-  git for-each-ref --format='%(refname)%09%(objectname)' refs/heads refs/remotes/origin > "$rds_guard_history_root/all-refs.raw"
-  sort "$rds_guard_history_root/all-refs.raw" > "$rds_guard_history_root/all-refs"
-  cmp "$rds_guard_history_root/allowed-refs" "$rds_guard_history_root/all-refs"
-  set +e
-  git cat-file -e "$rds_guard_upstream_sha^{commit}" > "$rds_guard_history_root/upstream-object.out" 2> "$rds_guard_history_root/upstream-object.err"
-  rds_guard_upstream_status=$?
-  set -e
-  test "$rds_guard_upstream_status" != '0'
-  test ! -s "$rds_guard_history_root/upstream-object.out"
+  rds_validate_exact_ref_state "$rds_guard_history_root/ref-state" "$rds_guard_phase"
+  rds_require_missing_object "$rds_guard_history_root/upstream-object" "$rds_guard_upstream_sha"
 }
 BASH
 File.binwrite(path, bytes)
 RUBY
-rds_guard_sha='abd731e83194070da157fbb641582e61082afd5e26a9d8118956116eb2fa1de1'
+rds_guard_sha='119edadd58e66d1e680d5b393ecb5b14520614fe0773367772e880a0533f7b68'
 printf '%s  %s\n' "$rds_guard_sha" "$rds_guard_script" > "$rds_fixture_out/guard.sha256"
 shasum -a 256 -c "$rds_fixture_out/guard.sha256"
 . "$rds_guard_script"
@@ -2215,8 +2268,67 @@ test "$(sed -n '1p' "$rds_fixture_out/marker-run-id")" = "$rds_new_run"
 printf 'corrupt\n' >> "$rds_marker_root/task4-active-log"
 rds_expect_reject task4-log-binding bash -c 'set -euo pipefail; . "$1"; rds_validate_task4_result "$2" new-head' _ "$rds_guard_script" "$rds_marker_root"
 
-test "$(awk 'END { print NR }' "$rds_fixture_out/summary")" = '14'
+rds_require_missing_object "$rds_fixture_out/missing-object-good" '9920097a40175c084c46fee1c306fa61cdbaf823'
+printf 'PASS guard=missing-object-good good=accepted\n' >> "$rds_fixture_out/summary"
+
+rds_history_good="$rds_fixture_root/history-good"
+rds_run_producer "$rds_fixture_out/history-clone.out" "$rds_fixture_out/history-clone.err" git clone --quiet --no-local "$rds_fixture_worktree" "$rds_history_good"
+test ! -s "$rds_fixture_out/history-clone.out"
+test ! -s "$rds_fixture_out/history-clone.err"
+git -C "$rds_history_good" symbolic-ref -d refs/remotes/origin/HEAD
+git -C "$rds_history_good" update-ref -d refs/remotes/origin/bootstrap/rds-main
+git -C "$rds_history_good" update-ref refs/heads/bootstrap/rds-main '9193123daad52fe028e68e204d8c409d169cf370'
+git -C "$rds_history_good" update-ref refs/remotes/origin/main '9193123daad52fe028e68e204d8c409d169cf370'
+rds_run_producer "$rds_fixture_out/history-head.out" "$rds_fixture_out/history-head.err" git -C "$rds_history_good" rev-parse HEAD
+test ! -s "$rds_fixture_out/history-head.err"
+test "$(awk 'END { print NR }' "$rds_fixture_out/history-head.out")" = '1'
+IFS= read -r rds_history_head < "$rds_fixture_out/history-head.out"
+rds_run_producer "$rds_fixture_out/history-parent.out" "$rds_fixture_out/history-parent.err" git -C "$rds_history_good" rev-parse HEAD^
+test ! -s "$rds_fixture_out/history-parent.err"
+test "$(awk 'END { print NR }' "$rds_fixture_out/history-parent.out")" = '1'
+IFS= read -r rds_history_parent < "$rds_fixture_out/history-parent.out"
+git -C "$rds_history_good" update-ref refs/remotes/origin/neutral/v7.2.1-neutral.1 "$rds_history_parent"
+git -C "$rds_history_good" remote set-url origin 'git@github.com:joeroberts/terraform-aws-rds.git'
+git -C "$rds_history_good" config branch.main.remote origin
+git -C "$rds_history_good" config branch.main.merge refs/heads/main
+git -C "$rds_history_good" config branch.neutral/v7.2.1-neutral.1.remote origin
+git -C "$rds_history_good" config branch.neutral/v7.2.1-neutral.1.merge refs/heads/neutral/v7.2.1-neutral.1
+: > "$rds_fixture_out/history-unused-scope"
+/bin/bash -c 'set -euo pipefail; cd "$1"; . "$2"; rds_validate_history "$3" plan-unpublished - "$4" "$5" "$5" "$5" "$5"' _ "$rds_history_good" "$rds_guard_script_abs" "$rds_fixture_out/history-good-result" '9920097a40175c084c46fee1c306fa61cdbaf823' "$rds_fixture_out/history-unused-scope"
+printf 'PASS guard=history-ref-state-good good=accepted\n' >> "$rds_fixture_out/summary"
+
+rds_history_tag="$rds_fixture_root/history-bad-tag"
+cp -R "$rds_history_good" "$rds_history_tag"
+git -C "$rds_history_tag" update-ref refs/tags/fixture-lightweight "$rds_history_head"
+rds_expect_reject history-lightweight-tag /bin/bash -c 'set -euo pipefail; cd "$1"; . "$2"; rds_validate_history "$3" plan-unpublished - "$4" "$5" "$5" "$5" "$5"' _ "$rds_history_tag" "$rds_guard_script_abs" "$rds_fixture_out/history-tag-result" '9920097a40175c084c46fee1c306fa61cdbaf823' "$rds_fixture_out/history-unused-scope"
+
+rds_history_other="$rds_fixture_root/history-bad-other-ref"
+cp -R "$rds_history_good" "$rds_history_other"
+git -C "$rds_history_other" update-ref refs/archive/fixture "$rds_history_head"
+rds_expect_reject history-nonstandard-ref /bin/bash -c 'set -euo pipefail; cd "$1"; . "$2"; rds_validate_history "$3" plan-unpublished - "$4" "$5" "$5" "$5" "$5"' _ "$rds_history_other" "$rds_guard_script_abs" "$rds_fixture_out/history-other-ref-result" '9920097a40175c084c46fee1c306fa61cdbaf823' "$rds_fixture_out/history-unused-scope"
+
+rds_fake_git_dir="$rds_fixture_root/fake-git"
+mkdir "$rds_fake_git_dir"
+ruby - "$rds_fake_git_dir/git" <<'RUBY'
+path = ARGV.fetch(0)
+bytes = <<'SH'
+#!/bin/sh
+if test "$1" = 'cat-file' && test "$2" = '--batch-check'; then
+  case "${RDS_FIXTURE_CAT_MODE-}" in
+    operational) printf '%s\n' 'fixture cat-file operational failure' >&2; exit 77 ;;
+    malformed) printf '%s\n' 'malformed batch response'; exit 0 ;;
+  esac
+fi
+exec /usr/bin/git "$@"
+SH
+File.binwrite(path, bytes)
+File.chmod(0o755, path)
+RUBY
+rds_expect_reject missing-object-operational /usr/bin/env RDS_FIXTURE_CAT_MODE=operational PATH="$rds_fake_git_dir:$PATH" /bin/bash -c 'set -euo pipefail; cd "$1"; . "$2"; rds_validate_history "$3" plan-unpublished - "$4" "$5" "$5" "$5" "$5"' _ "$rds_history_good" "$rds_guard_script_abs" "$rds_fixture_out/history-cat-operational-result" '9920097a40175c084c46fee1c306fa61cdbaf823' "$rds_fixture_out/history-unused-scope"
+rds_expect_reject missing-object-malformed /usr/bin/env RDS_FIXTURE_CAT_MODE=malformed PATH="$rds_fake_git_dir:$PATH" /bin/bash -c 'set -euo pipefail; cd "$1"; . "$2"; rds_validate_history "$3" plan-unpublished - "$4" "$5" "$5" "$5" "$5"' _ "$rds_history_good" "$rds_guard_script_abs" "$rds_fixture_out/history-cat-malformed-result" '9920097a40175c084c46fee1c306fa61cdbaf823' "$rds_fixture_out/history-unused-scope"
+
+test "$(awk 'END { print NR }' "$rds_fixture_out/summary")" = '20'
 cat "$rds_fixture_out/summary"
 ```
 
-Expected: the exact production library digest passes; every good input is accepted; all 14 named bad guard cases are rejected, including partial producer output, each manifest variance, untracked trailing whitespace, actual wrapper/notice/PR validators, `rg` status greater than 1, stale-marker early failure, and post-publication log mutation. No label claims coverage for a guard that was not invoked.
+Expected: the exact production library digest passes; both named good history/object cases are accepted; all 18 named bad guard cases are rejected. The original 14 rejections remain, and the exact shared history guard additionally rejects a lightweight tag, a nonstandard ref, an operational `cat-file --batch-check` failure, and malformed batch output. No label claims coverage for a guard that was not invoked.
