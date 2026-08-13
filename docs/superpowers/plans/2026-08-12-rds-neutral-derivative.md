@@ -21,7 +21,7 @@
 - Exactly four HCL paths differ from pristine: `main.tf` has its notice and three direct technical expressions; `variables.tf` has its notice and pristine lines 669-673 deleted; `wrappers/main.tf` has its notice and pristine line 99 deleted; `examples/s3-import-mysql/main.tf` has its notice, exact neutral S3 source, and adjacent Registry `version` line deleted. The other 100 Terraform paths are byte-identical to pristine.
 - Every Bash fence begins with `set -euo pipefail`, is Bash 3.2-compatible, materializes producer output in regular files, validates producer status and nonempty/exact counts, and consumes worklists with redirection. No process substitutions, producer-to-`while` pipelines, unconditional producer suppression, `rg -c`, `rg -v`, generic `git add .`, stage-by-exclusion, or unquoted multi-revision expansion is allowed.
 - Treat `rg` and `git grep` status 1 as no match and every status above 1 as fatal. Load history revisions from a validated file into a Bash 3.2 indexed array, require array/file count equality, and expand it as quoted separate arguments.
-- Resolve the root `.git` entry whether file or directory. Exclude only the exact root `.git`, exact root `.superpowers/`, and exact tracked plan/status paths where required; never hide nested paths with the same names. A pre-stage gate must include untracked paths and whitespace-check the exact worklist. A terminal-blank exception is allowed only for a named path whose bytes equal its independently retained expected transform, and may disable only `blank-at-eof`.
+- Resolve the root `.git` entry whether file or directory. Exclude only the exact root `.git`, exact root `.superpowers/`, and exact tracked plan/status paths where required; never hide nested paths with the same names. A pre-stage gate must include untracked paths and whitespace-check the exact worklist. Ordinary no-index paths require status 1 with empty stdout/stderr. Only byte-exact root `README.md` may return status 3 with one complete `README.md:<positive-line>: new blank line at EOF.` diagnostic, then pass a status-1/empty rerun disabling only `blank-at-eof`. The cached equivalent accepts only status 0/empty or status 2 with that sole exact diagnostic plus byte and split-scope rerun proof; every other status/diagnostic fails.
 - `git status --untracked-files=all` and `git ls-files --others --exclude-standard` do not expose ignored paths and are never complete filesystem-scope evidence. Task 1 binds the complete target filesystem manifest first, then partitions the exact 147 owned paths into 146 visible and the sole exact ignored owned path `examples/s3-import-mysql/backup.zip`, with producer status/stderr and expected/actual bytes verified before its one exact force-add.
 - Every dispatch creates a fresh task-owned upstream clone/archive/runtime. Never infer or reuse another task's scratch root. Do not require destructive cleanup; leave retained evidence in its task-owned temporary root or move a validated task-created artifact to a recoverable quarantine.
 - Before Task 0, materialize and exercise the exact ignored production guard library at `.superpowers/sdd/2026-08-12-rds-neutral-derivative/production-guards.bash`; every consuming fence requires its exact SHA-256 and sources that same file. A copied or reimplemented stand-in is not evidence.
@@ -51,7 +51,7 @@ rds_base='ffa16b253e97aa8d15177ba71febbac75bf8cc2c'
 rds_gate=$(mktemp -d /private/tmp/rds-task0-publication.XXXXXX)
 rds_durable='.superpowers/sdd/2026-08-12-rds-neutral-derivative'
 rds_guard_script="$rds_durable/production-guards.bash"
-rds_guard_sha='82b15f042d03d4c5dd954793549836e1e116ec0ee0560e6203ea921b824f1818'
+rds_guard_sha='21898cc64ab19aefe43e7ba9ead2ccb9a4453a0096ae7359f9a40793678d4151'
 printf '%s  %s\n' "$rds_guard_sha" "$rds_guard_script" > "$rds_gate/guard.sha256"
 shasum -a 256 -c "$rds_gate/guard.sha256"
 . "$rds_guard_script"
@@ -109,7 +109,7 @@ rds_expected="$rds_task_root/independent-expected"
 rds_evidence="$rds_task_root/evidence"
 rds_durable='.superpowers/sdd/2026-08-12-rds-neutral-derivative'
 rds_guard_script="$rds_durable/production-guards.bash"
-rds_guard_sha='82b15f042d03d4c5dd954793549836e1e116ec0ee0560e6203ea921b824f1818'
+rds_guard_sha='21898cc64ab19aefe43e7ba9ead2ccb9a4453a0096ae7359f9a40793678d4151'
 mkdir -p "$rds_pristine" "$rds_sanitized" "$rds_expected" "$rds_evidence"
 printf '%s  %s\n' "$rds_guard_sha" "$rds_guard_script" > "$rds_evidence/guard.sha256"
 shasum -a 256 -c "$rds_evidence/guard.sha256"
@@ -344,27 +344,7 @@ rds_validate_worklist_whitespace "$rds_evidence/owned-paths" "$rds_expected/READ
 rds_require_empty_producer "$rds_evidence/stage-visible.out" "$rds_evidence/stage-visible.err" git add --pathspec-from-file="$rds_evidence/owned-partition/visible"
 rds_require_empty_producer "$rds_evidence/stage-ignored.out" "$rds_evidence/stage-ignored.err" git add -f -- examples/s3-import-mysql/backup.zip
 rds_validate_cached_owned "$rds_expected" "$rds_evidence/owned-paths" "$rds_evidence/staged-import"
-set +e
-git diff --cached --check > "$rds_evidence/staged-check.out" 2> "$rds_evidence/staged-check.err"
-rds_check_status=$?
-set -e
-if test "$rds_check_status" != '0'; then
-  cmp "$rds_expected/README.md" README.md
-  set +e
-  git -c core.whitespace=-blank-at-eof diff --cached --check -- README.md > "$rds_evidence/readme-check.out" 2> "$rds_evidence/readme-check.err"
-  rds_readme_status=$?
-  set -e
-  test "$rds_readme_status" = '0'
-  test ! -s "$rds_evidence/readme-check.out"
-  test ! -s "$rds_evidence/readme-check.err"
-  set +e
-  git diff --cached --check -- . ':(exclude)README.md' > "$rds_evidence/other-check.out" 2> "$rds_evidence/other-check.err"
-  rds_other_status=$?
-  set -e
-  test "$rds_other_status" = '0'
-  test ! -s "$rds_evidence/other-check.out"
-  test ! -s "$rds_evidence/other-check.err"
-fi
+rds_validate_cached_whitespace "$rds_expected/README.md" "$rds_evidence/staged-whitespace"
 git commit -m 'feat: import neutral RDS module v7.2.1'
 git push origin "HEAD:refs/heads/$rds_branch"
 git fetch origin "$rds_branch"
@@ -398,7 +378,7 @@ rds_pristine="$rds_task_root/pristine"
 rds_evidence="$rds_task_root/evidence"
 rds_durable='.superpowers/sdd/2026-08-12-rds-neutral-derivative'
 rds_guard_script="$rds_durable/production-guards.bash"
-rds_guard_sha='82b15f042d03d4c5dd954793549836e1e116ec0ee0560e6203ea921b824f1818'
+rds_guard_sha='21898cc64ab19aefe43e7ba9ead2ccb9a4453a0096ae7359f9a40793678d4151'
 mkdir -p "$rds_pristine" "$rds_evidence"
 printf '%s  %s\n' "$rds_guard_sha" "$rds_guard_script" > "$rds_evidence/guard.sha256"
 shasum -a 256 -c "$rds_evidence/guard.sha256"
@@ -668,7 +648,7 @@ rds_evidence="$rds_task_root/evidence"
 rds_clone="$rds_task_root/verified-upstream"
 rds_durable='.superpowers/sdd/2026-08-12-rds-neutral-derivative'
 rds_guard_script="$rds_durable/production-guards.bash"
-rds_guard_sha='82b15f042d03d4c5dd954793549836e1e116ec0ee0560e6203ea921b824f1818'
+rds_guard_sha='21898cc64ab19aefe43e7ba9ead2ccb9a4453a0096ae7359f9a40793678d4151'
 mkdir -p "$rds_evidence/refs"
 printf '%s  %s\n' "$rds_guard_sha" "$rds_guard_script" > "$rds_evidence/guard.sha256"
 shasum -a 256 -c "$rds_evidence/guard.sha256"
@@ -978,7 +958,7 @@ rds_run_root="$rds_durable/task4-runs/$rds_run_id"
 rds_evidence="$rds_run_root/evidence"
 rds_validation_log="$rds_run_root/validation.log"
 rds_guard_script="$rds_durable/production-guards.bash"
-rds_guard_sha='82b15f042d03d4c5dd954793549836e1e116ec0ee0560e6203ea921b824f1818'
+rds_guard_sha='21898cc64ab19aefe43e7ba9ead2ccb9a4453a0096ae7359f9a40793678d4151'
 mkdir -p "$rds_pristine" "$rds_expected" "$rds_durable"
 rds_prepare_out="$rds_task_root/task4-prepare.out"
 rds_current_tmp="$rds_durable/.task4-current-$rds_run_id.tmp"
@@ -1488,7 +1468,7 @@ rds_task_root=$(mktemp -d /private/tmp/rds-task5-pr.XXXXXX)
 rds_evidence="$rds_task_root/evidence"
 rds_durable='.superpowers/sdd/2026-08-12-rds-neutral-derivative'
 rds_guard_script="$rds_durable/production-guards.bash"
-rds_guard_sha='82b15f042d03d4c5dd954793549836e1e116ec0ee0560e6203ea921b824f1818'
+rds_guard_sha='21898cc64ab19aefe43e7ba9ead2ccb9a4453a0096ae7359f9a40793678d4151'
 rds_whole_review="$rds_durable/task5-whole-branch-review.md"
 rds_scoped_review="$rds_durable/task5-scoped-rereview.md"
 rds_pr_body="$rds_task_root/pr-body.md"
@@ -1819,29 +1799,75 @@ rds_validate_worklist_whitespace() {
   rds_guard_evidence_prefix=$3
   test -s "$rds_guard_worklist"
   : > "$rds_guard_evidence_prefix.checked"
+  rds_guard_count=0
   while IFS= read -r rds_guard_path; do
     test -n "$rds_guard_path"
+    rds_guard_count=$((rds_guard_count + 1))
     set +e
-    git diff --no-index --check /dev/null "$rds_guard_path" > "$rds_guard_evidence_prefix.out" 2> "$rds_guard_evidence_prefix.err"
+    git diff --no-index --check /dev/null "$rds_guard_path" > "$rds_guard_evidence_prefix.$rds_guard_count.out" 2> "$rds_guard_evidence_prefix.$rds_guard_count.err"
     rds_guard_status=$?
     set -e
-    if test "$rds_guard_status" = '1' && test ! -s "$rds_guard_evidence_prefix.out" && test ! -s "$rds_guard_evidence_prefix.err"; then
+    if test "$rds_guard_status" = '1' && test ! -s "$rds_guard_evidence_prefix.$rds_guard_count.out" && test ! -s "$rds_guard_evidence_prefix.$rds_guard_count.err"; then
       printf '%s\n' "$rds_guard_path" >> "$rds_guard_evidence_prefix.checked"
       continue
     fi
-    test "$rds_guard_status" = '1'
     test "$rds_guard_path" = 'README.md'
+    test "$rds_guard_status" = '3'
+    test ! -s "$rds_guard_evidence_prefix.$rds_guard_count.err"
     cmp "$rds_guard_expected_readme" README.md
+    rds_require_exact_readme_blank_diagnostic "$rds_guard_evidence_prefix.$rds_guard_count.out"
     set +e
-    git -c core.whitespace=-blank-at-eof diff --no-index --check /dev/null "$rds_guard_path" > "$rds_guard_evidence_prefix.exception.out" 2> "$rds_guard_evidence_prefix.exception.err"
+    git -c core.whitespace=-blank-at-eof diff --no-index --check /dev/null "$rds_guard_path" > "$rds_guard_evidence_prefix.$rds_guard_count.exception.out" 2> "$rds_guard_evidence_prefix.$rds_guard_count.exception.err"
     rds_guard_exception_status=$?
     set -e
     test "$rds_guard_exception_status" = '1'
-    test ! -s "$rds_guard_evidence_prefix.exception.out"
-    test ! -s "$rds_guard_evidence_prefix.exception.err"
+    test ! -s "$rds_guard_evidence_prefix.$rds_guard_count.exception.out"
+    test ! -s "$rds_guard_evidence_prefix.$rds_guard_count.exception.err"
     printf '%s\n' "$rds_guard_path" >> "$rds_guard_evidence_prefix.checked"
   done < "$rds_guard_worklist"
   cmp "$rds_guard_worklist" "$rds_guard_evidence_prefix.checked"
+}
+
+rds_require_exact_readme_blank_diagnostic() {
+  rds_guard_diagnostic=$1
+  ruby - "$rds_guard_diagnostic" <<'RUBY_GUARD'
+path = ARGV.fetch(0)
+bytes = File.binread(path)
+abort "README blank-at-EOF diagnostic" unless /\AREADME\.md:[1-9][0-9]*: new blank line at EOF\.\n\z/.match?(bytes)
+RUBY_GUARD
+}
+
+rds_validate_cached_whitespace() {
+  rds_guard_expected_readme=$1
+  rds_guard_evidence_root=$2
+  mkdir -p "$rds_guard_evidence_root"
+  set +e
+  git diff --cached --check > "$rds_guard_evidence_root/all.out" 2> "$rds_guard_evidence_root/all.err"
+  rds_guard_status=$?
+  set -e
+  if test "$rds_guard_status" = '0'; then
+    test ! -s "$rds_guard_evidence_root/all.out"
+    test ! -s "$rds_guard_evidence_root/all.err"
+    return 0
+  fi
+  test "$rds_guard_status" = '2'
+  test ! -s "$rds_guard_evidence_root/all.err"
+  rds_require_exact_readme_blank_diagnostic "$rds_guard_evidence_root/all.out"
+  cmp "$rds_guard_expected_readme" README.md
+  set +e
+  git -c core.whitespace=-blank-at-eof diff --cached --check -- README.md > "$rds_guard_evidence_root/readme.out" 2> "$rds_guard_evidence_root/readme.err"
+  rds_guard_readme_status=$?
+  set -e
+  test "$rds_guard_readme_status" = '0'
+  test ! -s "$rds_guard_evidence_root/readme.out"
+  test ! -s "$rds_guard_evidence_root/readme.err"
+  set +e
+  git diff --cached --check -- . ':(exclude)README.md' > "$rds_guard_evidence_root/other.out" 2> "$rds_guard_evidence_root/other.err"
+  rds_guard_other_status=$?
+  set -e
+  test "$rds_guard_other_status" = '0'
+  test ! -s "$rds_guard_evidence_root/other.out"
+  test ! -s "$rds_guard_evidence_root/other.err"
 }
 
 rds_validate_wrapper_sources() {
@@ -2261,7 +2287,7 @@ rds_validate_history() {
 BASH
 File.binwrite(path, bytes)
 RUBY
-rds_guard_sha='82b15f042d03d4c5dd954793549836e1e116ec0ee0560e6203ea921b824f1818'
+rds_guard_sha='21898cc64ab19aefe43e7ba9ead2ccb9a4453a0096ae7359f9a40793678d4151'
 printf '%s  %s\n' "$rds_guard_sha" "$rds_guard_script" > "$rds_fixture_out/guard.sha256"
 shasum -a 256 -c "$rds_fixture_out/guard.sha256"
 . "$rds_guard_script"
@@ -2424,7 +2450,123 @@ printf '%s\n' file.txt > "$rds_fixture_out/whitespace-paths"
   cd "$rds_fixture_root/whitespace-good"
   rds_validate_worklist_whitespace "$rds_fixture_out/whitespace-paths" "$rds_fixture_out/unused-readme" "$rds_fixture_out/whitespace-good"
 )
+printf 'PASS guard=worklist-clean-ordinary good=accepted\n' >> "$rds_fixture_out/summary"
 rds_expect_reject untracked-whitespace bash -c 'set -euo pipefail; . "$1"; cd "$2"; rds_validate_worklist_whitespace "$3" "$4" "$5"' _ "$rds_guard_script" "$rds_fixture_root/whitespace-bad" "$rds_fixture_out/whitespace-paths" "$rds_fixture_out/unused-readme" "$rds_fixture_out/whitespace-bad"
+
+rds_readme_fixture="$rds_fixture_root/whitespace-readme"
+mkdir -p "$rds_readme_fixture/good" "$rds_readme_fixture/trailing" "$rds_readme_fixture/blank-trailing" "$rds_readme_fixture/multiple-eof" "$rds_readme_fixture/other-blank"
+printf '%s\n' README.md > "$rds_readme_fixture/readme-worklist"
+printf '%s\n' OTHER.md > "$rds_readme_fixture/other-worklist"
+printf 'line\n\n' > "$rds_readme_fixture/good/README.md"
+cp "$rds_readme_fixture/good/README.md" "$rds_readme_fixture/expected-good-README.md"
+(
+  cd "$rds_readme_fixture/good"
+  rds_validate_worklist_whitespace "$rds_readme_fixture/readme-worklist" "$rds_readme_fixture/expected-good-README.md" "$rds_readme_fixture/good-result"
+)
+printf 'PASS guard=worklist-exact-readme-blank good=accepted\n' >> "$rds_fixture_out/summary"
+printf 'line \n' > "$rds_readme_fixture/trailing/README.md"
+cp "$rds_readme_fixture/trailing/README.md" "$rds_readme_fixture/expected-trailing-README.md"
+rds_expect_reject worklist-readme-trailing /bin/bash -c 'set -euo pipefail; . "$1"; cd "$2"; rds_validate_worklist_whitespace "$3" "$4" "$5"' _ "$rds_guard_script" "$rds_readme_fixture/trailing" "$rds_readme_fixture/readme-worklist" "$rds_readme_fixture/expected-trailing-README.md" "$rds_readme_fixture/trailing-result"
+printf 'line \n\n' > "$rds_readme_fixture/blank-trailing/README.md"
+cp "$rds_readme_fixture/blank-trailing/README.md" "$rds_readme_fixture/expected-blank-trailing-README.md"
+rds_expect_reject worklist-readme-blank-and-trailing /bin/bash -c 'set -euo pipefail; . "$1"; cd "$2"; rds_validate_worklist_whitespace "$3" "$4" "$5"' _ "$rds_guard_script" "$rds_readme_fixture/blank-trailing" "$rds_readme_fixture/readme-worklist" "$rds_readme_fixture/expected-blank-trailing-README.md" "$rds_readme_fixture/blank-trailing-result"
+printf 'line\n\n\n' > "$rds_readme_fixture/multiple-eof/README.md"
+rds_expect_reject worklist-readme-multiple-eof-bytes /bin/bash -c 'set -euo pipefail; . "$1"; cd "$2"; rds_validate_worklist_whitespace "$3" "$4" "$5"' _ "$rds_guard_script" "$rds_readme_fixture/multiple-eof" "$rds_readme_fixture/readme-worklist" "$rds_readme_fixture/expected-good-README.md" "$rds_readme_fixture/multiple-eof-bytes-result"
+printf 'other\n\n' > "$rds_readme_fixture/other-blank/OTHER.md"
+rds_expect_reject worklist-other-file-blank /bin/bash -c 'set -euo pipefail; . "$1"; cd "$2"; rds_validate_worklist_whitespace "$3" "$4" "$5"' _ "$rds_guard_script" "$rds_readme_fixture/other-blank" "$rds_readme_fixture/other-worklist" "$rds_readme_fixture/expected-good-README.md" "$rds_readme_fixture/other-blank-result"
+printf 'wrong expected README\n' > "$rds_readme_fixture/expected-wrong-README.md"
+rds_expect_reject worklist-readme-wrong-expected /bin/bash -c 'set -euo pipefail; . "$1"; cd "$2"; rds_validate_worklist_whitespace "$3" "$4" "$5"' _ "$rds_guard_script" "$rds_readme_fixture/good" "$rds_readme_fixture/readme-worklist" "$rds_readme_fixture/expected-wrong-README.md" "$rds_readme_fixture/wrong-expected-result"
+
+rds_fake_whitespace_git="$rds_fixture_root/fake-whitespace-git"
+mkdir "$rds_fake_whitespace_git"
+ruby - "$rds_fake_whitespace_git/git" <<'RUBY'
+path = ARGV.fetch(0)
+bytes = <<'SH'
+#!/bin/sh
+if test "$1" = 'diff' && test "$2" = '--no-index' && test "$3" = '--check'; then
+  case "${RDS_FIXTURE_WHITESPACE_MODE-}" in
+    worklist-operational) printf '%s\n' 'worklist producer failed' >&2; exit 77 ;;
+    worklist-multiple) printf '%s\n' 'README.md:2: new blank line at EOF.' 'README.md:3: new blank line at EOF.'; exit 3 ;;
+  esac
+fi
+if test "$1" = 'diff' && test "$2" = '--cached' && test "$3" = '--check' && test "$#" = '3'; then
+  case "${RDS_FIXTURE_WHITESPACE_MODE-}" in
+    cached-operational) printf '%s\n' 'cached producer failed' >&2; exit 77 ;;
+    cached-multiple) printf '%s\n' 'README.md:2: new blank line at EOF.' 'README.md:3: new blank line at EOF.'; exit 2 ;;
+  esac
+fi
+exec /usr/bin/git "$@"
+SH
+File.binwrite(path, bytes)
+File.chmod(0o755, path)
+RUBY
+rds_expect_reject worklist-readme-multiple-eof-diagnostics /usr/bin/env RDS_FIXTURE_WHITESPACE_MODE=worklist-multiple PATH="$rds_fake_whitespace_git:$PATH" /bin/bash -c 'set -euo pipefail; . "$1"; cd "$2"; rds_validate_worklist_whitespace "$3" "$4" "$5"' _ "$rds_guard_script" "$rds_readme_fixture/good" "$rds_readme_fixture/readme-worklist" "$rds_readme_fixture/expected-good-README.md" "$rds_readme_fixture/multiple-result"
+rds_expect_reject worklist-whitespace-operational /usr/bin/env RDS_FIXTURE_WHITESPACE_MODE=worklist-operational PATH="$rds_fake_whitespace_git:$PATH" /bin/bash -c 'set -euo pipefail; . "$1"; cd "$2"; rds_validate_worklist_whitespace "$3" "$4" "$5"' _ "$rds_guard_script" "$rds_readme_fixture/good" "$rds_readme_fixture/readme-worklist" "$rds_readme_fixture/expected-good-README.md" "$rds_readme_fixture/operational-result"
+
+rds_make_cached_whitespace_fixture() {
+  rds_cached_name=$1
+  rds_cached_root="$rds_fixture_root/$rds_cached_name"
+  mkdir "$rds_cached_root"
+  rds_require_empty_producer "$rds_fixture_out/$rds_cached_name-init.out" "$rds_fixture_out/$rds_cached_name-init.err" git init --quiet "$rds_cached_root"
+  printf 'base\n' > "$rds_cached_root/base.txt"
+  rds_require_empty_producer "$rds_fixture_out/$rds_cached_name-add-base.out" "$rds_fixture_out/$rds_cached_name-add-base.err" git -C "$rds_cached_root" add -- base.txt
+  rds_require_empty_producer "$rds_fixture_out/$rds_cached_name-commit-base.out" "$rds_fixture_out/$rds_cached_name-commit-base.err" git -C "$rds_cached_root" -c user.name='RDS fixture' -c user.email='rds-fixture@example.invalid' commit --quiet -m base
+}
+
+rds_make_cached_whitespace_fixture cached-whitespace-clean
+rds_cached_clean="$rds_fixture_root/cached-whitespace-clean"
+printf 'clean\n' > "$rds_cached_clean/ordinary.txt"
+rds_require_empty_producer "$rds_fixture_out/cached-clean-add.out" "$rds_fixture_out/cached-clean-add.err" git -C "$rds_cached_clean" add -- ordinary.txt
+(
+  cd "$rds_cached_clean"
+  rds_validate_cached_whitespace "$rds_readme_fixture/expected-good-README.md" "$rds_fixture_out/cached-clean-result"
+)
+printf 'PASS guard=cached-whitespace-clean good=accepted\n' >> "$rds_fixture_out/summary"
+
+rds_make_cached_whitespace_fixture cached-readme-good
+rds_cached_good="$rds_fixture_root/cached-readme-good"
+cp "$rds_readme_fixture/expected-good-README.md" "$rds_cached_good/README.md"
+rds_require_empty_producer "$rds_fixture_out/cached-readme-good-add.out" "$rds_fixture_out/cached-readme-good-add.err" git -C "$rds_cached_good" add -- README.md
+(
+  cd "$rds_cached_good"
+  rds_validate_cached_whitespace "$rds_readme_fixture/expected-good-README.md" "$rds_fixture_out/cached-readme-good-result"
+)
+printf 'PASS guard=cached-exact-readme-blank good=accepted\n' >> "$rds_fixture_out/summary"
+
+rds_make_cached_whitespace_fixture cached-readme-trailing
+rds_cached_trailing="$rds_fixture_root/cached-readme-trailing"
+cp "$rds_readme_fixture/expected-trailing-README.md" "$rds_cached_trailing/README.md"
+rds_require_empty_producer "$rds_fixture_out/cached-readme-trailing-add.out" "$rds_fixture_out/cached-readme-trailing-add.err" git -C "$rds_cached_trailing" add -- README.md
+rds_expect_reject cached-readme-trailing /bin/bash -c 'set -euo pipefail; . "$1"; cd "$2"; rds_validate_cached_whitespace "$3" "$4"' _ "$rds_guard_script" "$rds_cached_trailing" "$rds_readme_fixture/expected-trailing-README.md" "$rds_fixture_out/cached-readme-trailing-result"
+
+rds_make_cached_whitespace_fixture cached-readme-blank-trailing
+rds_cached_blank_trailing="$rds_fixture_root/cached-readme-blank-trailing"
+cp "$rds_readme_fixture/expected-blank-trailing-README.md" "$rds_cached_blank_trailing/README.md"
+rds_require_empty_producer "$rds_fixture_out/cached-readme-blank-trailing-add.out" "$rds_fixture_out/cached-readme-blank-trailing-add.err" git -C "$rds_cached_blank_trailing" add -- README.md
+rds_expect_reject cached-readme-blank-and-trailing /bin/bash -c 'set -euo pipefail; . "$1"; cd "$2"; rds_validate_cached_whitespace "$3" "$4"' _ "$rds_guard_script" "$rds_cached_blank_trailing" "$rds_readme_fixture/expected-blank-trailing-README.md" "$rds_fixture_out/cached-readme-blank-trailing-result"
+
+rds_make_cached_whitespace_fixture cached-readme-multiple-eof
+rds_cached_multiple_eof="$rds_fixture_root/cached-readme-multiple-eof"
+cp "$rds_readme_fixture/multiple-eof/README.md" "$rds_cached_multiple_eof/README.md"
+rds_require_empty_producer "$rds_fixture_out/cached-readme-multiple-eof-add.out" "$rds_fixture_out/cached-readme-multiple-eof-add.err" git -C "$rds_cached_multiple_eof" add -- README.md
+rds_expect_reject cached-readme-multiple-eof-bytes /bin/bash -c 'set -euo pipefail; . "$1"; cd "$2"; rds_validate_cached_whitespace "$3" "$4"' _ "$rds_guard_script" "$rds_cached_multiple_eof" "$rds_readme_fixture/expected-good-README.md" "$rds_fixture_out/cached-readme-multiple-eof-bytes-result"
+
+rds_expect_reject cached-readme-multiple-eof-diagnostics /usr/bin/env RDS_FIXTURE_WHITESPACE_MODE=cached-multiple PATH="$rds_fake_whitespace_git:$PATH" /bin/bash -c 'set -euo pipefail; . "$1"; cd "$2"; rds_validate_cached_whitespace "$3" "$4"' _ "$rds_guard_script" "$rds_cached_good" "$rds_readme_fixture/expected-good-README.md" "$rds_fixture_out/cached-readme-multiple-result"
+rds_expect_reject cached-readme-wrong-expected /bin/bash -c 'set -euo pipefail; . "$1"; cd "$2"; rds_validate_cached_whitespace "$3" "$4"' _ "$rds_guard_script" "$rds_cached_good" "$rds_readme_fixture/expected-wrong-README.md" "$rds_fixture_out/cached-readme-wrong-expected-result"
+rds_expect_reject cached-whitespace-operational /usr/bin/env RDS_FIXTURE_WHITESPACE_MODE=cached-operational PATH="$rds_fake_whitespace_git:$PATH" /bin/bash -c 'set -euo pipefail; . "$1"; cd "$2"; rds_validate_cached_whitespace "$3" "$4"' _ "$rds_guard_script" "$rds_cached_good" "$rds_readme_fixture/expected-good-README.md" "$rds_fixture_out/cached-operational-result"
+
+rds_make_cached_whitespace_fixture cached-other-blank
+rds_cached_other_blank="$rds_fixture_root/cached-other-blank"
+printf 'other\n\n' > "$rds_cached_other_blank/OTHER.md"
+rds_require_empty_producer "$rds_fixture_out/cached-other-blank-add.out" "$rds_fixture_out/cached-other-blank-add.err" git -C "$rds_cached_other_blank" add -- OTHER.md
+rds_expect_reject cached-other-file-blank /bin/bash -c 'set -euo pipefail; . "$1"; cd "$2"; rds_validate_cached_whitespace "$3" "$4"' _ "$rds_guard_script" "$rds_cached_other_blank" "$rds_readme_fixture/expected-good-README.md" "$rds_fixture_out/cached-other-blank-result"
+
+rds_make_cached_whitespace_fixture cached-readme-and-other-trailing
+rds_cached_other_failure="$rds_fixture_root/cached-readme-and-other-trailing"
+cp "$rds_readme_fixture/expected-good-README.md" "$rds_cached_other_failure/README.md"
+printf 'other trailing \n' > "$rds_cached_other_failure/OTHER.md"
+rds_require_empty_producer "$rds_fixture_out/cached-other-failure-add.out" "$rds_fixture_out/cached-other-failure-add.err" git -C "$rds_cached_other_failure" add -- README.md OTHER.md
+rds_expect_reject cached-readme-plus-other-failure /bin/bash -c 'set -euo pipefail; . "$1"; cd "$2"; rds_validate_cached_whitespace "$3" "$4"' _ "$rds_guard_script" "$rds_cached_other_failure" "$rds_readme_fixture/expected-good-README.md" "$rds_fixture_out/cached-other-failure-result"
 
 rds_consumer_good="$rds_fixture_root/consumer-good"
 rds_consumer_bad="$rds_fixture_root/consumer-bad"
@@ -2578,8 +2720,8 @@ RUBY
 rds_expect_reject missing-object-operational /usr/bin/env RDS_FIXTURE_CAT_MODE=operational PATH="$rds_fake_git_dir:$PATH" /bin/bash -c 'set -euo pipefail; cd "$1"; . "$2"; rds_validate_history "$3" plan-unpublished - "$4" "$5" "$5" "$5" "$5"' _ "$rds_history_good" "$rds_guard_script_abs" "$rds_fixture_out/history-cat-operational-result" '9920097a40175c084c46fee1c306fa61cdbaf823' "$rds_fixture_out/history-unused-scope"
 rds_expect_reject missing-object-malformed /usr/bin/env RDS_FIXTURE_CAT_MODE=malformed PATH="$rds_fake_git_dir:$PATH" /bin/bash -c 'set -euo pipefail; cd "$1"; . "$2"; rds_validate_history "$3" plan-unpublished - "$4" "$5" "$5" "$5" "$5"' _ "$rds_history_good" "$rds_guard_script_abs" "$rds_fixture_out/history-cat-malformed-result" '9920097a40175c084c46fee1c306fa61cdbaf823' "$rds_fixture_out/history-unused-scope"
 
-test "$(awk 'END { print NR }' "$rds_fixture_out/summary")" = '32'
+test "$(awk 'END { print NR }' "$rds_fixture_out/summary")" = '51'
 cat "$rds_fixture_out/summary"
 ```
 
-Expected: the exact production library digest passes; all six named good cases are accepted and all 26 named bad guard cases are rejected. The prior 20 rejections/four acceptances remain. The new exact production-equivalent cases accept the 146-visible/one-exact-ignored partition and its force-added 147-byte-for-byte staged result; they reject a missing, wrongly named, extra, hash-mutated, or visible/ignored-overlapping ignored path and a staged set missing the exact force-add. Exact direct-expression fixtures additionally accept pristine suffixed upstream lines as absence, reject a pristine exact direct line, accept exactly one of each sanitized whole line, and reject sanitized prefix/suffix mutations. No label claims coverage for a guard that was not invoked.
+Expected: the exact production library digest passes; all ten named good cases are accepted and all 41 named bad guard cases are rejected. The prior 26 rejections/six acceptances remain. Worklist and cached guards accept clean ordinary content and only the byte-bound root `README.md` with one exact blank-at-EOF diagnostic; they reject README trailing whitespace, combined blank/trailing diagnostics, multiple EOF bytes, multiple EOF diagnostics, the same blank in another path, wrong expected README bytes, operational producer failure, and another cached file failure. The exact partition cases accept the 146-visible/one-exact-ignored partition and its force-added 147-byte-for-byte staged result; they reject a missing, wrongly named, extra, hash-mutated, or visible/ignored-overlapping ignored path and a staged set missing the exact force-add. Exact direct-expression fixtures accept pristine suffixed upstream lines as absence, reject a pristine exact direct line, accept exactly one of each sanitized whole line, and reject sanitized prefix/suffix mutations. No label claims coverage for a guard that was not invoked.
