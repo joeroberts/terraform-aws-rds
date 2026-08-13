@@ -1,9 +1,9 @@
-# RDS Neutral Derivative Blocker
+# RDS Neutral Derivative Planning Status
 
 - Branch: `neutral/v7.2.1-neutral.1`.
 - Approved upstream: `terraform-aws-modules/terraform-aws-rds` tag `v7.2.1`, SHA `9920097a40175c084c46fee1c306fa61cdbaf823`.
-- The enumerated edit set and strict parity requirement conflict with repository-wide neutrality: the upstream snapshot has an additional match at `CHANGELOG.md:385`, outside the approved edit set.
-- No source change, pull request, tag, or release was created.
-- Safe resolution requires explicit authorization to neutralize the changelog entry and to update the parity and notice expectations accordingly.
-
-This is the final repository in the requested sequence.
+- Authorization is resolved: delete the complete authorized political changelog bullet at pristine `CHANGELOG.md:385`; do not rewrite it.
+- The implementation plan has been comprehensively amended with fail-closed import, parity, generation, workflow, pre-commit, validation, review, PR, and campaign-journal gates.
+- This planning amendment is the only completed work. Task 1 has not started and no upstream source has been imported into this worktree.
+- No RDS pull request, reserved tag `v7.2.1-neutral.1`, or release exists. Do not create any of them while committing this planning-only amendment.
+- Execution may begin only after the exact two-document planning amendment is normally committed, pushed, fetched, and read back on the synchronized branch.
