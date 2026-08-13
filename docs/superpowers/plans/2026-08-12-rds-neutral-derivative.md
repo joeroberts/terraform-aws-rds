@@ -22,6 +22,7 @@
 - Every Bash fence begins with `set -euo pipefail`, is Bash 3.2-compatible, materializes producer output in regular files, validates producer status and nonempty/exact counts, and consumes worklists with redirection. No process substitutions, producer-to-`while` pipelines, unconditional producer suppression, `rg -c`, `rg -v`, generic `git add .`, stage-by-exclusion, or unquoted multi-revision expansion is allowed.
 - Treat `rg` and `git grep` status 1 as no match and every status above 1 as fatal. Load history revisions from a validated file into a Bash 3.2 indexed array, require array/file count equality, and expand it as quoted separate arguments.
 - Resolve the root `.git` entry whether file or directory. Exclude only the exact root `.git`, exact root `.superpowers/`, and exact tracked plan/status paths where required; never hide nested paths with the same names. A pre-stage gate must include untracked paths and whitespace-check the exact worklist. A terminal-blank exception is allowed only for a named path whose bytes equal its independently retained expected transform, and may disable only `blank-at-eof`.
+- `git status --untracked-files=all` and `git ls-files --others --exclude-standard` do not expose ignored paths and are never complete filesystem-scope evidence. Task 1 binds the complete target filesystem manifest first, then partitions the exact 147 owned paths into 146 visible and the sole exact ignored owned path `examples/s3-import-mysql/backup.zip`, with producer status/stderr and expected/actual bytes verified before its one exact force-add.
 - Every dispatch creates a fresh task-owned upstream clone/archive/runtime. Never infer or reuse another task's scratch root. Do not require destructive cleanup; leave retained evidence in its task-owned temporary root or move a validated task-created artifact to a recoverable quarantine.
 - Before Task 0, materialize and exercise the exact ignored production guard library at `.superpowers/sdd/2026-08-12-rds-neutral-derivative/production-guards.bash`; every consuming fence requires its exact SHA-256 and sources that same file. A copied or reimplemented stand-in is not evidence.
 - History is one exact linear state machine: fixed bootstrap/planning prefix, a gapless prefix of explicitly named plan-review rounds 1 through 5, Task 1, Task 2, Task 3, and at most one explicitly named consolidated independent-review fix. Every commit has its exact parent, subject, and allowed path/status scope validated; every live ref in every namespace, remote/branch configuration, history path, and reachable object is compared with the allowed manifests. The fixed upstream object-absence check uses a successful exact `git cat-file --batch-check` missing response, never generic nonzero status. Merges and imported upstream ancestry are forbidden.
@@ -50,7 +51,7 @@ rds_base='ffa16b253e97aa8d15177ba71febbac75bf8cc2c'
 rds_gate=$(mktemp -d /private/tmp/rds-task0-publication.XXXXXX)
 rds_durable='.superpowers/sdd/2026-08-12-rds-neutral-derivative'
 rds_guard_script="$rds_durable/production-guards.bash"
-rds_guard_sha='9ebe1644a5c5e2f232b320e991e4a60a80f94dcdbbc58e8d0a8c43ff42b80aca'
+rds_guard_sha='82b15f042d03d4c5dd954793549836e1e116ec0ee0560e6203ea921b824f1818'
 printf '%s  %s\n' "$rds_guard_sha" "$rds_guard_script" > "$rds_gate/guard.sha256"
 shasum -a 256 -c "$rds_gate/guard.sha256"
 . "$rds_guard_script"
@@ -89,7 +90,7 @@ Expected: the exact docs-only amendment is the clean synchronized branch tip; so
 
 **Files:** Modify before copy `CHANGELOG.md`, `README.md`, `main.tf`, `variables.tf`, `wrappers/main.tf`; create `UPSTREAM.md`; import the other 141 pristine paths.
 
-**Interfaces:** Consumes a fresh exact upstream archive. Produces one 147-file import commit whose five upstream deltas and every byte are independently bound before first copy.
+**Interfaces:** Consumes a fresh exact upstream archive. Produces one 147-file import commit whose five upstream deltas and every byte are independently bound; it either makes the first copy into an empty target or proves and retains the exact pre-existing copied 147-file state without recopy.
 
 - [ ] **Step 1: Run the complete fail-closed import in one dispatch-owned root. Do not split or reuse this root in another dispatch.**
 
@@ -108,7 +109,7 @@ rds_expected="$rds_task_root/independent-expected"
 rds_evidence="$rds_task_root/evidence"
 rds_durable='.superpowers/sdd/2026-08-12-rds-neutral-derivative'
 rds_guard_script="$rds_durable/production-guards.bash"
-rds_guard_sha='9ebe1644a5c5e2f232b320e991e4a60a80f94dcdbbc58e8d0a8c43ff42b80aca'
+rds_guard_sha='82b15f042d03d4c5dd954793549836e1e116ec0ee0560e6203ea921b824f1818'
 mkdir -p "$rds_pristine" "$rds_sanitized" "$rds_expected" "$rds_evidence"
 printf '%s  %s\n' "$rds_guard_sha" "$rds_guard_script" > "$rds_evidence/guard.sha256"
 shasum -a 256 -c "$rds_evidence/guard.sha256"
@@ -118,7 +119,8 @@ test "$(git remote get-url origin)" = 'git@github.com:joeroberts/terraform-aws-r
 rds_git_entry=$(git rev-parse --git-dir)
 test -e "$rds_git_entry"
 git status --porcelain=v2 --untracked-files=all > "$rds_evidence/pre-status"
-test ! -s "$rds_evidence/pre-status"
+rds_require_empty_producer "$rds_evidence/pre-unstaged.out" "$rds_evidence/pre-unstaged.err" git diff --name-only
+rds_require_empty_producer "$rds_evidence/pre-staged.out" "$rds_evidence/pre-staged.err" git diff --cached --name-only
 test "$(git merge-base "$rds_base" HEAD)" = "$rds_base"
 test -s "$rds_durable/approved-plan.tsv"
 : > "$rds_evidence/unused-scope"
@@ -304,7 +306,25 @@ cmp "$rds_pristine/LICENSE" "$rds_expected/LICENSE"
 printf '%s\n' UPSTREAM.md >> "$rds_evidence/upstream-paths"
 sort "$rds_evidence/upstream-paths" > "$rds_evidence/owned-paths"
 test "$(awk 'END { print NR }' "$rds_evidence/owned-paths")" = '147'
-rsync -a --files-from="$rds_evidence/owned-paths" "$rds_expected/" ./
+rds_git_entry=$(git rev-parse --git-dir)
+test -e "$rds_git_entry"
+find . -path './.git' -prune -o -type f -print0 > "$rds_evidence/pre-copy-target-files.nul"
+: > "$rds_evidence/pre-copy-target-owned.raw"
+while IFS= read -r -d '' rds_file; do
+  rds_path=${rds_file#./}
+  case "$rds_path" in
+    .git|.superpowers/*|docs/superpowers/plans/2026-08-12-rds-neutral-derivative.md|docs/superpowers/status/2026-08-12-rds-neutral-derivative-blocker.md) continue ;;
+  esac
+  printf '%s\n' "$rds_path" >> "$rds_evidence/pre-copy-target-owned.raw"
+done < "$rds_evidence/pre-copy-target-files.nul"
+sort "$rds_evidence/pre-copy-target-owned.raw" > "$rds_evidence/pre-copy-target-owned"
+if test -s "$rds_evidence/pre-copy-target-owned"; then
+  rds_validate_owned_partition "$rds_expected" . "$rds_evidence/owned-paths" "$rds_evidence/pre-copy-target-owned" "$rds_evidence/pre-copy-owned-partition" 'c8d8023c32cf12704cc10a4d3a9fab7cb7da1f7a675f0c986c025c068189b671'
+  printf '%s\n' 'exact pre-existing 147-file copied state retained without recopy' > "$rds_evidence/copy-mode"
+else
+  rsync -a --files-from="$rds_evidence/owned-paths" "$rds_expected/" ./
+  printf '%s\n' 'fresh exact 147-file copy' > "$rds_evidence/copy-mode"
+fi
 rds_git_entry=$(git rev-parse --git-dir)
 test -e "$rds_git_entry"
 find . -path './.git' -prune -o -type f -print0 > "$rds_evidence/target-files.nul"
@@ -319,14 +339,11 @@ while IFS= read -r -d '' rds_file; do
 done < "$rds_evidence/target-files.nul"
 sort "$rds_evidence/target-owned.raw" > "$rds_evidence/target-owned"
 rds_require_path_hash_manifest "$rds_expected" . "$rds_evidence/owned-paths" "$rds_evidence/target-owned" "$rds_evidence/import-manifest"
-git ls-files --others --exclude-standard > "$rds_evidence/untracked.raw"
-sort "$rds_evidence/untracked.raw" > "$rds_evidence/untracked"
-cmp "$rds_evidence/owned-paths" "$rds_evidence/untracked"
+rds_validate_owned_partition "$rds_expected" . "$rds_evidence/owned-paths" "$rds_evidence/target-owned" "$rds_evidence/owned-partition" 'c8d8023c32cf12704cc10a4d3a9fab7cb7da1f7a675f0c986c025c068189b671'
 rds_validate_worklist_whitespace "$rds_evidence/owned-paths" "$rds_expected/README.md" "$rds_evidence/whitespace"
-git add --pathspec-from-file="$rds_evidence/owned-paths"
-git diff --cached --name-only > "$rds_evidence/staged.raw"
-sort "$rds_evidence/staged.raw" > "$rds_evidence/staged"
-cmp "$rds_evidence/owned-paths" "$rds_evidence/staged"
+rds_require_empty_producer "$rds_evidence/stage-visible.out" "$rds_evidence/stage-visible.err" git add --pathspec-from-file="$rds_evidence/owned-partition/visible"
+rds_require_empty_producer "$rds_evidence/stage-ignored.out" "$rds_evidence/stage-ignored.err" git add -f -- examples/s3-import-mysql/backup.zip
+rds_validate_cached_owned "$rds_expected" "$rds_evidence/owned-paths" "$rds_evidence/staged-import"
 set +e
 git diff --cached --check > "$rds_evidence/staged-check.out" 2> "$rds_evidence/staged-check.err"
 rds_check_status=$?
@@ -358,7 +375,7 @@ git status --porcelain=v2 --untracked-files=all > "$rds_evidence/post-status"
 test ! -s "$rds_evidence/post-status"
 ```
 
-Expected: pristine acceptance fails; both independent sanitized trees match; all 146 upstream paths plus exact `UPSTREAM.md` are hash-bound before and immediately after first copy; exactly five upstream paths differ; all scope, whitespace, staging, commit, and synchronization gates close.
+Expected: pristine acceptance fails; both independent sanitized trees match; all 146 upstream paths plus exact `UPSTREAM.md` are hash-bound before any fresh copy and against the target. An empty target receives the first copy; an exact pre-existing 147-file target is retained without recopy. Exactly five upstream paths differ; the target partitions into 146 visible untracked paths plus the sole exact ignored ZIP; all scope, whitespace, exact force-add, cached-byte/hash, commit, and synchronization gates close.
 
 ---
 
@@ -381,7 +398,7 @@ rds_pristine="$rds_task_root/pristine"
 rds_evidence="$rds_task_root/evidence"
 rds_durable='.superpowers/sdd/2026-08-12-rds-neutral-derivative'
 rds_guard_script="$rds_durable/production-guards.bash"
-rds_guard_sha='9ebe1644a5c5e2f232b320e991e4a60a80f94dcdbbc58e8d0a8c43ff42b80aca'
+rds_guard_sha='82b15f042d03d4c5dd954793549836e1e116ec0ee0560e6203ea921b824f1818'
 mkdir -p "$rds_pristine" "$rds_evidence"
 printf '%s  %s\n' "$rds_guard_sha" "$rds_guard_script" > "$rds_evidence/guard.sha256"
 shasum -a 256 -c "$rds_evidence/guard.sha256"
@@ -606,8 +623,9 @@ printf '%s\n' \
 git diff --name-only > "$rds_evidence/task2-actual.raw"
 sort "$rds_evidence/task2-actual.raw" > "$rds_evidence/task2-actual"
 cmp "$rds_evidence/task2-paths" "$rds_evidence/task2-actual"
-git ls-files --others --exclude-standard > "$rds_evidence/untracked"
+rds_run_producer "$rds_evidence/untracked" "$rds_evidence/untracked.err" git ls-files --others --exclude-standard
 test ! -s "$rds_evidence/untracked"
+test ! -s "$rds_evidence/untracked.err"
 set +e
 git diff --check > "$rds_evidence/diff-check.out" 2> "$rds_evidence/diff-check.err"
 rds_check_status=$?
@@ -650,7 +668,7 @@ rds_evidence="$rds_task_root/evidence"
 rds_clone="$rds_task_root/verified-upstream"
 rds_durable='.superpowers/sdd/2026-08-12-rds-neutral-derivative'
 rds_guard_script="$rds_durable/production-guards.bash"
-rds_guard_sha='9ebe1644a5c5e2f232b320e991e4a60a80f94dcdbbc58e8d0a8c43ff42b80aca'
+rds_guard_sha='82b15f042d03d4c5dd954793549836e1e116ec0ee0560e6203ea921b824f1818'
 mkdir -p "$rds_evidence/refs"
 printf '%s  %s\n' "$rds_guard_sha" "$rds_guard_script" > "$rds_evidence/guard.sha256"
 shasum -a 256 -c "$rds_evidence/guard.sha256"
@@ -909,8 +927,9 @@ printf '%s\n' \
 git diff --name-only > "$rds_evidence/task3-actual.raw"
 sort "$rds_evidence/task3-actual.raw" > "$rds_evidence/task3-actual"
 cmp "$rds_evidence/task3-paths" "$rds_evidence/task3-actual"
-git ls-files --others --exclude-standard > "$rds_evidence/untracked"
+rds_run_producer "$rds_evidence/untracked" "$rds_evidence/untracked.err" git ls-files --others --exclude-standard
 test ! -s "$rds_evidence/untracked"
+test ! -s "$rds_evidence/untracked.err"
 set +e
 git diff --check > "$rds_evidence/diff-check.out" 2> "$rds_evidence/diff-check.err"
 rds_check_status=$?
@@ -959,7 +978,7 @@ rds_run_root="$rds_durable/task4-runs/$rds_run_id"
 rds_evidence="$rds_run_root/evidence"
 rds_validation_log="$rds_run_root/validation.log"
 rds_guard_script="$rds_durable/production-guards.bash"
-rds_guard_sha='9ebe1644a5c5e2f232b320e991e4a60a80f94dcdbbc58e8d0a8c43ff42b80aca'
+rds_guard_sha='82b15f042d03d4c5dd954793549836e1e116ec0ee0560e6203ea921b824f1818'
 mkdir -p "$rds_pristine" "$rds_expected" "$rds_durable"
 rds_prepare_out="$rds_task_root/task4-prepare.out"
 rds_current_tmp="$rds_durable/.task4-current-$rds_run_id.tmp"
@@ -1469,7 +1488,7 @@ rds_task_root=$(mktemp -d /private/tmp/rds-task5-pr.XXXXXX)
 rds_evidence="$rds_task_root/evidence"
 rds_durable='.superpowers/sdd/2026-08-12-rds-neutral-derivative'
 rds_guard_script="$rds_durable/production-guards.bash"
-rds_guard_sha='9ebe1644a5c5e2f232b320e991e4a60a80f94dcdbbc58e8d0a8c43ff42b80aca'
+rds_guard_sha='82b15f042d03d4c5dd954793549836e1e116ec0ee0560e6203ea921b824f1818'
 rds_whole_review="$rds_durable/task5-whole-branch-review.md"
 rds_scoped_review="$rds_durable/task5-scoped-rereview.md"
 rds_pr_body="$rds_task_root/pr-body.md"
@@ -1710,6 +1729,88 @@ rds_require_path_hash_manifest() {
   case "$rds_guard_expected_count" in ''|*[!0-9]*) return 1 ;; esac
   test "$rds_guard_count" = "$rds_guard_expected_count"
   cmp "$rds_guard_evidence_prefix.expected-hashes" "$rds_guard_evidence_prefix.actual-hashes"
+}
+
+rds_validate_owned_partition() {
+  rds_guard_expected_root=$1
+  rds_guard_actual_root=$2
+  rds_guard_owned_paths=$3
+  rds_guard_target_owned=$4
+  rds_guard_evidence_root=$5
+  rds_guard_ignored_sha=$6
+  rds_guard_ignored_path='examples/s3-import-mysql/backup.zip'
+  case "$rds_guard_ignored_sha" in *[!0-9a-f]*|'') return 1 ;; esac
+  test "${#rds_guard_ignored_sha}" = '64'
+  mkdir -p "$rds_guard_evidence_root"
+  rds_require_path_hash_manifest "$rds_guard_expected_root" "$rds_guard_actual_root" "$rds_guard_owned_paths" "$rds_guard_target_owned" "$rds_guard_evidence_root/owned"
+  test "$(awk 'END { print NR }' "$rds_guard_owned_paths")" = '147'
+  test "$(awk 'END { print NR }' "$rds_guard_target_owned")" = '147'
+
+  rds_run_producer "$rds_guard_evidence_root/visible.raw" "$rds_guard_evidence_root/visible.err" git -C "$rds_guard_actual_root" ls-files --others --exclude-standard
+  test ! -s "$rds_guard_evidence_root/visible.err"
+  sort "$rds_guard_evidence_root/visible.raw" > "$rds_guard_evidence_root/visible"
+  cmp "$rds_guard_evidence_root/visible.raw" "$rds_guard_evidence_root/visible"
+  test "$(awk 'END { print NR }' "$rds_guard_evidence_root/visible")" = '146'
+
+  set +e
+  git -C "$rds_guard_actual_root" check-ignore --stdin < "$rds_guard_owned_paths" > "$rds_guard_evidence_root/ignored.raw" 2> "$rds_guard_evidence_root/ignored.err"
+  rds_guard_status=$?
+  set -e
+  test "$rds_guard_status" = '0'
+  test ! -s "$rds_guard_evidence_root/ignored.err"
+  sort "$rds_guard_evidence_root/ignored.raw" > "$rds_guard_evidence_root/ignored"
+  cmp "$rds_guard_evidence_root/ignored.raw" "$rds_guard_evidence_root/ignored"
+  printf '%s\n' "$rds_guard_ignored_path" > "$rds_guard_evidence_root/expected-ignored"
+  cmp "$rds_guard_evidence_root/expected-ignored" "$rds_guard_evidence_root/ignored"
+
+  comm -12 "$rds_guard_evidence_root/visible" "$rds_guard_evidence_root/ignored" > "$rds_guard_evidence_root/overlap"
+  test ! -s "$rds_guard_evidence_root/overlap"
+  cat "$rds_guard_evidence_root/visible" "$rds_guard_evidence_root/ignored" > "$rds_guard_evidence_root/partition.raw"
+  sort "$rds_guard_evidence_root/partition.raw" > "$rds_guard_evidence_root/partition"
+  cmp "$rds_guard_owned_paths" "$rds_guard_evidence_root/partition"
+  awk -v p="$rds_guard_ignored_path" '$0 == p { found++ } END { exit found == 1 ? 0 : 1 }' "$rds_guard_owned_paths"
+  awk -v p="$rds_guard_ignored_path" '$0 == p { found++ } END { exit found == 1 ? 0 : 1 }' "$rds_guard_target_owned"
+  printf '%s  %s\n' "$rds_guard_ignored_sha" "$rds_guard_ignored_path" > "$rds_guard_evidence_root/expected-ignored-hash"
+  awk -v p="$rds_guard_ignored_path" '$2 == p { print }' "$rds_guard_evidence_root/owned.expected-hashes" > "$rds_guard_evidence_root/expected-ignored-hash.observed"
+  awk -v p="$rds_guard_ignored_path" '$2 == p { print }' "$rds_guard_evidence_root/owned.actual-hashes" > "$rds_guard_evidence_root/actual-ignored-hash.observed"
+  cmp "$rds_guard_evidence_root/expected-ignored-hash" "$rds_guard_evidence_root/expected-ignored-hash.observed"
+  cmp "$rds_guard_evidence_root/expected-ignored-hash" "$rds_guard_evidence_root/actual-ignored-hash.observed"
+}
+
+rds_validate_cached_owned() {
+  rds_guard_expected_root=$1
+  rds_guard_owned_paths=$2
+  rds_guard_evidence_root=$3
+  mkdir -p "$rds_guard_evidence_root"
+  test "$(awk 'END { print NR }' "$rds_guard_owned_paths")" = '147'
+  rds_run_producer "$rds_guard_evidence_root/staged.raw" "$rds_guard_evidence_root/staged.err" git diff --cached --name-only
+  test ! -s "$rds_guard_evidence_root/staged.err"
+  sort "$rds_guard_evidence_root/staged.raw" > "$rds_guard_evidence_root/staged"
+  cmp "$rds_guard_owned_paths" "$rds_guard_evidence_root/staged"
+  rds_run_producer "$rds_guard_evidence_root/status.raw" "$rds_guard_evidence_root/status.err" git diff --cached --name-status
+  test ! -s "$rds_guard_evidence_root/status.err"
+  awk -F '\t' 'NF != 2 || $1 != "A" { exit 1 } { print $2 }' "$rds_guard_evidence_root/status.raw" > "$rds_guard_evidence_root/added.raw"
+  sort "$rds_guard_evidence_root/added.raw" > "$rds_guard_evidence_root/added"
+  cmp "$rds_guard_owned_paths" "$rds_guard_evidence_root/added"
+  : > "$rds_guard_evidence_root/expected-hashes"
+  : > "$rds_guard_evidence_root/cached-hashes"
+  rds_guard_count=0
+  while IFS= read -r rds_guard_path; do
+    test -n "$rds_guard_path"
+    rds_guard_count=$((rds_guard_count + 1))
+    test -f "$rds_guard_expected_root/$rds_guard_path"
+    rds_run_producer "$rds_guard_evidence_root/blob-$rds_guard_count" "$rds_guard_evidence_root/blob-$rds_guard_count.err" git show ":$rds_guard_path"
+    test ! -s "$rds_guard_evidence_root/blob-$rds_guard_count.err"
+    cmp "$rds_guard_expected_root/$rds_guard_path" "$rds_guard_evidence_root/blob-$rds_guard_count"
+    rds_run_producer "$rds_guard_evidence_root/expected-hash-$rds_guard_count.raw" "$rds_guard_evidence_root/expected-hash-$rds_guard_count.err" shasum -a 256 "$rds_guard_expected_root/$rds_guard_path"
+    test ! -s "$rds_guard_evidence_root/expected-hash-$rds_guard_count.err"
+    rds_run_producer "$rds_guard_evidence_root/cached-hash-$rds_guard_count.raw" "$rds_guard_evidence_root/cached-hash-$rds_guard_count.err" shasum -a 256 "$rds_guard_evidence_root/blob-$rds_guard_count"
+    test ! -s "$rds_guard_evidence_root/cached-hash-$rds_guard_count.err"
+    awk -v p="$rds_guard_path" 'NR == 1 && length($1) == 64 && $1 ~ /^[0-9a-f]+$/ { print $1 "  " p; ok = 1 } END { exit ok == 1 ? 0 : 1 }' "$rds_guard_evidence_root/expected-hash-$rds_guard_count.raw" >> "$rds_guard_evidence_root/expected-hashes"
+    awk -v p="$rds_guard_path" 'NR == 1 && length($1) == 64 && $1 ~ /^[0-9a-f]+$/ { print $1 "  " p; ok = 1 } END { exit ok == 1 ? 0 : 1 }' "$rds_guard_evidence_root/cached-hash-$rds_guard_count.raw" >> "$rds_guard_evidence_root/cached-hashes"
+  done < "$rds_guard_owned_paths"
+  test "$rds_guard_count" = '147'
+  cmp "$rds_guard_evidence_root/expected-hashes" "$rds_guard_evidence_root/cached-hashes"
 }
 
 rds_validate_worklist_whitespace() {
@@ -2160,7 +2261,7 @@ rds_validate_history() {
 BASH
 File.binwrite(path, bytes)
 RUBY
-rds_guard_sha='9ebe1644a5c5e2f232b320e991e4a60a80f94dcdbbc58e8d0a8c43ff42b80aca'
+rds_guard_sha='82b15f042d03d4c5dd954793549836e1e116ec0ee0560e6203ea921b824f1818'
 printf '%s  %s\n' "$rds_guard_sha" "$rds_guard_script" > "$rds_fixture_out/guard.sha256"
 shasum -a 256 -c "$rds_fixture_out/guard.sha256"
 . "$rds_guard_script"
@@ -2202,6 +2303,118 @@ for rds_case in added removed mutated; do
   esac
   rds_expect_reject "manifest-$rds_case" bash -c 'set -euo pipefail; . "$1"; rds_require_path_hash_manifest "$2" "$3" "$4" "$5" "$6"' _ "$rds_guard_script" "$rds_fixture_root/expected" "$rds_case_root" "$rds_fixture_out/expected-paths" "$rds_fixture_out/$rds_case-paths" "$rds_fixture_out/manifest-$rds_case"
 done
+
+rds_make_partition_fixture() {
+  rds_partition_name=$1
+  rds_partition_root="$rds_fixture_root/$rds_partition_name"
+  rds_partition_expected="$rds_partition_root/expected"
+  rds_partition_actual="$rds_partition_root/actual"
+  rds_partition_evidence="$rds_partition_root/evidence"
+  mkdir -p "$rds_partition_expected/source" "$rds_partition_actual/source" "$rds_partition_expected/examples/s3-import-mysql" "$rds_partition_actual/examples/s3-import-mysql" "$rds_partition_evidence"
+  rds_require_empty_producer "$rds_partition_evidence/init.out" "$rds_partition_evidence/init.err" git init --quiet "$rds_partition_actual"
+  printf '%s\n' '*.zip' > "$rds_partition_actual/.gitignore"
+  rds_require_empty_producer "$rds_partition_evidence/add-ignore.out" "$rds_partition_evidence/add-ignore.err" git -C "$rds_partition_actual" add -- .gitignore
+  rds_require_empty_producer "$rds_partition_evidence/commit-ignore.out" "$rds_partition_evidence/commit-ignore.err" git -C "$rds_partition_actual" -c user.name='RDS fixture' -c user.email='rds-fixture@example.invalid' commit --quiet -m 'fixture ignore rule'
+  : > "$rds_partition_evidence/owned.raw"
+  rds_partition_index=1
+  while test "$rds_partition_index" -le '146'; do
+    printf -v rds_partition_path 'source/file-%03d.txt' "$rds_partition_index"
+    printf 'visible fixture %s\n' "$rds_partition_index" > "$rds_partition_expected/$rds_partition_path"
+    cp "$rds_partition_expected/$rds_partition_path" "$rds_partition_actual/$rds_partition_path"
+    printf '%s\n' "$rds_partition_path" >> "$rds_partition_evidence/owned.raw"
+    rds_partition_index=$((rds_partition_index + 1))
+  done
+  printf 'fixture ignored archive bytes\n' > "$rds_partition_expected/examples/s3-import-mysql/backup.zip"
+  cp "$rds_partition_expected/examples/s3-import-mysql/backup.zip" "$rds_partition_actual/examples/s3-import-mysql/backup.zip"
+  printf '%s\n' 'examples/s3-import-mysql/backup.zip' >> "$rds_partition_evidence/owned.raw"
+  sort "$rds_partition_evidence/owned.raw" > "$rds_partition_evidence/owned"
+  cp "$rds_partition_evidence/owned" "$rds_partition_evidence/target-owned"
+  rds_run_producer "$rds_partition_evidence/ignored-sha.raw" "$rds_partition_evidence/ignored-sha.err" shasum -a 256 "$rds_partition_expected/examples/s3-import-mysql/backup.zip"
+  test ! -s "$rds_partition_evidence/ignored-sha.err"
+  awk 'NR == 1 && length($1) == 64 && $1 ~ /^[0-9a-f]+$/ { print $1; ok = 1 } END { exit ok == 1 ? 0 : 1 }' "$rds_partition_evidence/ignored-sha.raw" > "$rds_partition_evidence/ignored-sha"
+}
+
+rds_make_partition_fixture partition-good
+rds_partition_good="$rds_fixture_root/partition-good"
+IFS= read -r rds_partition_good_sha < "$rds_partition_good/evidence/ignored-sha"
+(
+  cd "$rds_partition_good/actual"
+  rds_validate_owned_partition "$rds_partition_good/expected" . "$rds_partition_good/evidence/owned" "$rds_partition_good/evidence/target-owned" "$rds_partition_good/evidence/partition-result" "$rds_partition_good_sha"
+)
+printf 'PASS guard=owned-partition-146-visible-one-ignored good=accepted\n' >> "$rds_fixture_out/summary"
+
+rds_make_partition_fixture partition-missing-ignored
+rds_partition_missing="$rds_fixture_root/partition-missing-ignored"
+IFS= read -r rds_partition_missing_sha < "$rds_partition_missing/evidence/ignored-sha"
+mv "$rds_partition_missing/actual/examples/s3-import-mysql/backup.zip" "$rds_partition_missing/recoverable-backup.zip"
+rds_expect_reject owned-partition-missing-ignored /bin/bash -c 'set -euo pipefail; cd "$1"; . "$2"; rds_validate_owned_partition "$3" . "$4" "$5" "$6" "$7"' _ "$rds_partition_missing/actual" "$rds_guard_script_abs" "$rds_partition_missing/expected" "$rds_partition_missing/evidence/owned" "$rds_partition_missing/evidence/target-owned" "$rds_partition_missing/evidence/partition-result" "$rds_partition_missing_sha"
+
+rds_make_partition_fixture partition-wrong-ignored
+rds_partition_wrong="$rds_fixture_root/partition-wrong-ignored"
+IFS= read -r rds_partition_wrong_sha < "$rds_partition_wrong/evidence/ignored-sha"
+mv "$rds_partition_wrong/expected/examples/s3-import-mysql/backup.zip" "$rds_partition_wrong/expected/examples/s3-import-mysql/wrong.zip"
+mv "$rds_partition_wrong/actual/examples/s3-import-mysql/backup.zip" "$rds_partition_wrong/actual/examples/s3-import-mysql/wrong.zip"
+sed 's#examples/s3-import-mysql/backup.zip#examples/s3-import-mysql/wrong.zip#' "$rds_partition_wrong/evidence/owned" > "$rds_partition_wrong/evidence/owned.changed"
+mv "$rds_partition_wrong/evidence/owned.changed" "$rds_partition_wrong/evidence/owned"
+cp "$rds_partition_wrong/evidence/owned" "$rds_partition_wrong/evidence/target-owned"
+rds_expect_reject owned-partition-wrong-ignored /bin/bash -c 'set -euo pipefail; cd "$1"; . "$2"; rds_validate_owned_partition "$3" . "$4" "$5" "$6" "$7"' _ "$rds_partition_wrong/actual" "$rds_guard_script_abs" "$rds_partition_wrong/expected" "$rds_partition_wrong/evidence/owned" "$rds_partition_wrong/evidence/target-owned" "$rds_partition_wrong/evidence/partition-result" "$rds_partition_wrong_sha"
+
+rds_make_partition_fixture partition-extra-ignored
+rds_partition_extra="$rds_fixture_root/partition-extra-ignored"
+IFS= read -r rds_partition_extra_sha < "$rds_partition_extra/evidence/ignored-sha"
+printf 'extra ignored archive\n' > "$rds_partition_extra/expected/examples/s3-import-mysql/extra.zip"
+cp "$rds_partition_extra/expected/examples/s3-import-mysql/extra.zip" "$rds_partition_extra/actual/examples/s3-import-mysql/extra.zip"
+printf '%s\n' 'examples/s3-import-mysql/extra.zip' >> "$rds_partition_extra/evidence/owned"
+sort "$rds_partition_extra/evidence/owned" > "$rds_partition_extra/evidence/owned.sorted"
+mv "$rds_partition_extra/evidence/owned.sorted" "$rds_partition_extra/evidence/owned"
+cp "$rds_partition_extra/evidence/owned" "$rds_partition_extra/evidence/target-owned"
+rds_expect_reject owned-partition-extra-ignored /bin/bash -c 'set -euo pipefail; cd "$1"; . "$2"; rds_validate_owned_partition "$3" . "$4" "$5" "$6" "$7"' _ "$rds_partition_extra/actual" "$rds_guard_script_abs" "$rds_partition_extra/expected" "$rds_partition_extra/evidence/owned" "$rds_partition_extra/evidence/target-owned" "$rds_partition_extra/evidence/partition-result" "$rds_partition_extra_sha"
+
+rds_make_partition_fixture partition-ignored-mutated
+rds_partition_mutated="$rds_fixture_root/partition-ignored-mutated"
+IFS= read -r rds_partition_mutated_sha < "$rds_partition_mutated/evidence/ignored-sha"
+printf 'mutated ignored archive\n' > "$rds_partition_mutated/actual/examples/s3-import-mysql/backup.zip"
+rds_expect_reject owned-partition-ignored-hash /bin/bash -c 'set -euo pipefail; cd "$1"; . "$2"; rds_validate_owned_partition "$3" . "$4" "$5" "$6" "$7"' _ "$rds_partition_mutated/actual" "$rds_guard_script_abs" "$rds_partition_mutated/expected" "$rds_partition_mutated/evidence/owned" "$rds_partition_mutated/evidence/target-owned" "$rds_partition_mutated/evidence/partition-result" "$rds_partition_mutated_sha"
+
+rds_fake_partition_git="$rds_fixture_root/fake-partition-git"
+mkdir "$rds_fake_partition_git"
+ruby - "$rds_fake_partition_git/git" <<'RUBY'
+path = ARGV.fetch(0)
+bytes = <<'SH'
+#!/bin/sh
+if test "$1" = '-C' && test "$3" = 'ls-files' && test "${RDS_FIXTURE_PARTITION_MODE-}" = 'overlap'; then
+  /usr/bin/git "$@" > "$RDS_FIXTURE_PARTITION_RAW" 2> "$RDS_FIXTURE_PARTITION_ERR"
+  status=$?
+  test "$status" = '0' || exit "$status"
+  test ! -s "$RDS_FIXTURE_PARTITION_ERR" || exit 78
+  printf '%s\n' 'examples/s3-import-mysql/backup.zip'
+  sed '/^source\/file-001.txt$/d' "$RDS_FIXTURE_PARTITION_RAW"
+  exit 0
+fi
+exec /usr/bin/git "$@"
+SH
+File.binwrite(path, bytes)
+File.chmod(0o755, path)
+RUBY
+rds_expect_reject owned-partition-visible-ignored-overlap /usr/bin/env RDS_FIXTURE_PARTITION_MODE=overlap RDS_FIXTURE_PARTITION_RAW="$rds_fixture_out/fake-partition.raw" RDS_FIXTURE_PARTITION_ERR="$rds_fixture_out/fake-partition.err" PATH="$rds_fake_partition_git:$PATH" /bin/bash -c 'set -euo pipefail; cd "$1"; . "$2"; rds_validate_owned_partition "$3" . "$4" "$5" "$6" "$7"' _ "$rds_partition_good/actual" "$rds_guard_script_abs" "$rds_partition_good/expected" "$rds_partition_good/evidence/owned" "$rds_partition_good/evidence/target-owned" "$rds_partition_good/evidence/partition-overlap-result" "$rds_partition_good_sha"
+
+(
+  cd "$rds_partition_good/actual"
+  rds_require_empty_producer "$rds_partition_good/evidence/stage-visible.out" "$rds_partition_good/evidence/stage-visible.err" git add --pathspec-from-file="$rds_partition_good/evidence/partition-result/visible"
+  rds_require_empty_producer "$rds_partition_good/evidence/stage-ignored.out" "$rds_partition_good/evidence/stage-ignored.err" git add -f -- examples/s3-import-mysql/backup.zip
+  rds_validate_cached_owned "$rds_partition_good/expected" "$rds_partition_good/evidence/owned" "$rds_partition_good/evidence/staged-result"
+)
+printf 'PASS guard=cached-owned-force-add good=accepted\n' >> "$rds_fixture_out/summary"
+
+rds_make_partition_fixture staging-missing-force-add
+rds_staging_missing="$rds_fixture_root/staging-missing-force-add"
+IFS= read -r rds_staging_missing_sha < "$rds_staging_missing/evidence/ignored-sha"
+(
+  cd "$rds_staging_missing/actual"
+  rds_validate_owned_partition "$rds_staging_missing/expected" . "$rds_staging_missing/evidence/owned" "$rds_staging_missing/evidence/target-owned" "$rds_staging_missing/evidence/partition-result" "$rds_staging_missing_sha"
+  rds_require_empty_producer "$rds_staging_missing/evidence/stage-visible.out" "$rds_staging_missing/evidence/stage-visible.err" git add --pathspec-from-file="$rds_staging_missing/evidence/partition-result/visible"
+)
+rds_expect_reject cached-owned-missing-force-add /bin/bash -c 'set -euo pipefail; cd "$1"; . "$2"; rds_validate_cached_owned "$3" "$4" "$5"' _ "$rds_staging_missing/actual" "$rds_guard_script_abs" "$rds_staging_missing/expected" "$rds_staging_missing/evidence/owned" "$rds_staging_missing/evidence/staged-result"
 
 mkdir "$rds_fixture_root/whitespace-good" "$rds_fixture_root/whitespace-bad"
 printf 'clean\n' > "$rds_fixture_root/whitespace-good/file.txt"
@@ -2365,8 +2578,8 @@ RUBY
 rds_expect_reject missing-object-operational /usr/bin/env RDS_FIXTURE_CAT_MODE=operational PATH="$rds_fake_git_dir:$PATH" /bin/bash -c 'set -euo pipefail; cd "$1"; . "$2"; rds_validate_history "$3" plan-unpublished - "$4" "$5" "$5" "$5" "$5"' _ "$rds_history_good" "$rds_guard_script_abs" "$rds_fixture_out/history-cat-operational-result" '9920097a40175c084c46fee1c306fa61cdbaf823' "$rds_fixture_out/history-unused-scope"
 rds_expect_reject missing-object-malformed /usr/bin/env RDS_FIXTURE_CAT_MODE=malformed PATH="$rds_fake_git_dir:$PATH" /bin/bash -c 'set -euo pipefail; cd "$1"; . "$2"; rds_validate_history "$3" plan-unpublished - "$4" "$5" "$5" "$5" "$5"' _ "$rds_history_good" "$rds_guard_script_abs" "$rds_fixture_out/history-cat-malformed-result" '9920097a40175c084c46fee1c306fa61cdbaf823' "$rds_fixture_out/history-unused-scope"
 
-test "$(awk 'END { print NR }' "$rds_fixture_out/summary")" = '24'
+test "$(awk 'END { print NR }' "$rds_fixture_out/summary")" = '32'
 cat "$rds_fixture_out/summary"
 ```
 
-Expected: the exact production library digest passes; all four named good cases are accepted and all 20 named bad guard cases are rejected. The round-2 18 rejections remain. Exact direct-expression fixtures additionally accept pristine suffixed upstream lines as absence, reject a pristine exact direct line, accept exactly one of each sanitized whole line, and reject sanitized prefix/suffix mutations. No label claims coverage for a guard that was not invoked.
+Expected: the exact production library digest passes; all six named good cases are accepted and all 26 named bad guard cases are rejected. The prior 20 rejections/four acceptances remain. The new exact production-equivalent cases accept the 146-visible/one-exact-ignored partition and its force-added 147-byte-for-byte staged result; they reject a missing, wrongly named, extra, hash-mutated, or visible/ignored-overlapping ignored path and a staged set missing the exact force-add. Exact direct-expression fixtures additionally accept pristine suffixed upstream lines as absence, reject a pristine exact direct line, accept exactly one of each sanitized whole line, and reject sanitized prefix/suffix mutations. No label claims coverage for a guard that was not invoked.
