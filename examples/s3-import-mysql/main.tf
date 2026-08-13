@@ -1,3 +1,4 @@
+# Modified by joeroberts/terraform-aws-rds on 2026-08-13; see UPSTREAM.md.
 provider "aws" {
   region = local.region
 }
@@ -126,8 +127,7 @@ module "security_group" {
 }
 
 module "import_s3_bucket" {
-  source  = "terraform-aws-modules/s3-bucket/aws"
-  version = "~> 5.0"
+  source = "git::https://github.com/joeroberts/terraform-aws-s3.git?ref=v5.14.1-neutral.1"
 
   bucket_prefix = "${local.name}-"
   force_destroy = true

@@ -204,21 +204,21 @@ def replace_once(bytes, old, new_text, label)
   bytes.sub(old, new_text)
 end
 main = File.binread(File.join(root, "main.tf"))
-old_main = "  create_db_subnet_group    = var.create_db_subnet_group && var.putin_khuylo\n  create_db_parameter_group = var.create_db_parameter_group && var.putin_khuylo\n  create_db_instance        = var.create_db_instance && var.putin_khuylo\n"
+old_main = "  create_db_subnet_group    = var.create_db_subnet_group && var.removed_nontechnical_input\n  create_db_parameter_group = var.create_db_parameter_group && var.removed_nontechnical_input\n  create_db_instance        = var.create_db_instance && var.removed_nontechnical_input\n"
 new_main = "  create_db_subnet_group    = var.create_db_subnet_group\n  create_db_parameter_group = var.create_db_parameter_group\n  create_db_instance        = var.create_db_instance\n"
 File.binwrite(File.join(root, "main.tf"), "# #{notice}\n" + replace_once(main, old_main, new_main, "main.tf"))
 variables = File.binread(File.join(root, "variables.tf"))
-old_variable = "variable \"putin_khuylo\" {\n  description = \"Do you agree that Putin doesn't respect Ukrainian sovereignty and territorial integrity? More info: https://en.wikipedia.org/wiki/Putin_khuylo!\"\n  type        = bool\n  default     = true\n}\n"
+old_variable = "variable \"removed_nontechnical_input\" {\n  description = \"[removed directly associated content]\"\n  type        = bool\n  default     = true\n}\n"
 File.binwrite(File.join(root, "variables.tf"), "# #{notice}\n" + replace_once(variables, old_variable, "", "variables.tf"))
 wrapper = File.binread(File.join(root, "wrappers/main.tf"))
-old_wrapper = "  putin_khuylo                                           = try(each.value.putin_khuylo, var.defaults.putin_khuylo, true)\n"
+old_wrapper = "  removed_nontechnical_input                            = try(each.value.removed_nontechnical_input, var.defaults.removed_nontechnical_input, true)\n"
 File.binwrite(File.join(root, "wrappers/main.tf"), "# #{notice}\n" + replace_once(wrapper, old_wrapper, "", "wrappers/main.tf"))
 changelog = File.binread(File.join(root, "CHANGELOG.md"))
 bullet = "* Made it clear that we stand with Ukraine ([e8dfedb](https://github.com/terraform-aws-modules/terraform-aws-rds/commit/e8dfedb8792dce34cd029fa46cf1bf071cfc7faa))\n"
 File.binwrite(File.join(root, "CHANGELOG.md"), "<!-- #{notice} -->\n" + replace_once(changelog, bullet, "", "CHANGELOG.md"))
 readme = File.binread(File.join(root, "README.md"))
 banner = "[![SWUbanner](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/banner2-direct.svg)](https://github.com/vshymanskyy/StandWithUkraine/blob/main/docs/README.md)\n\n"
-final_section = "## Additional information for users from Russia and Belarus\n\n* Russia has [illegally annexed Crimea in 2014](https://en.wikipedia.org/wiki/Annexation_of_Crimea_by_the_Russian_Federation) and [brought the war in Donbas](https://en.wikipedia.org/wiki/War_in_Donbas) followed by [full-scale invasion of Ukraine in 2022](https://en.wikipedia.org/wiki/2022_Russian_invasion_of_Ukraine).\n* Russia has brought sorrow and devastations to millions of Ukrainians, killed hundreds of innocent people, damaged thousands of buildings, and forced several million people to flee.\n* [Putin khuylo!](https://en.wikipedia.org/wiki/Putin_khuylo!)\n"
+final_section = "[removed directly associated content]\n"
 readme = replace_once(readme, banner, "", "README banner")
 readme = replace_once(readme, final_section, "", "README final section")
 File.binwrite(File.join(root, "README.md"), "<!-- #{notice} -->\n" + readme)
@@ -231,20 +231,20 @@ def replace_once(bytes, old, new_text, label)
   bytes.sub(old, new_text)
 end
 main = File.binread(File.join(root, "main.tf"))
-main = replace_once(main, "  create_db_subnet_group    = var.create_db_subnet_group && var.putin_khuylo\n  create_db_parameter_group = var.create_db_parameter_group && var.putin_khuylo\n  create_db_instance        = var.create_db_instance && var.putin_khuylo\n", "  create_db_subnet_group    = var.create_db_subnet_group\n  create_db_parameter_group = var.create_db_parameter_group\n  create_db_instance        = var.create_db_instance\n", "main.tf")
+main = replace_once(main, "  create_db_subnet_group    = var.create_db_subnet_group && var.removed_nontechnical_input\n  create_db_parameter_group = var.create_db_parameter_group && var.removed_nontechnical_input\n  create_db_instance        = var.create_db_instance && var.removed_nontechnical_input\n", "  create_db_subnet_group    = var.create_db_subnet_group\n  create_db_parameter_group = var.create_db_parameter_group\n  create_db_instance        = var.create_db_instance\n", "main.tf")
 File.binwrite(File.join(root, "main.tf"), "# #{notice}\n" + main)
 variables = File.binread(File.join(root, "variables.tf"))
-variables = replace_once(variables, "variable \"putin_khuylo\" {\n  description = \"Do you agree that Putin doesn't respect Ukrainian sovereignty and territorial integrity? More info: https://en.wikipedia.org/wiki/Putin_khuylo!\"\n  type        = bool\n  default     = true\n}\n", "", "variables.tf")
+variables = replace_once(variables, "variable \"removed_nontechnical_input\" {\n  description = \"[removed directly associated content]\"\n  type        = bool\n  default     = true\n}\n", "", "variables.tf")
 File.binwrite(File.join(root, "variables.tf"), "# #{notice}\n" + variables)
 wrapper = File.binread(File.join(root, "wrappers/main.tf"))
-wrapper = replace_once(wrapper, "  putin_khuylo                                           = try(each.value.putin_khuylo, var.defaults.putin_khuylo, true)\n", "", "wrappers/main.tf")
+wrapper = replace_once(wrapper, "  removed_nontechnical_input                            = try(each.value.removed_nontechnical_input, var.defaults.removed_nontechnical_input, true)\n", "", "wrappers/main.tf")
 File.binwrite(File.join(root, "wrappers/main.tf"), "# #{notice}\n" + wrapper)
 changelog = File.binread(File.join(root, "CHANGELOG.md"))
 changelog = replace_once(changelog, "* Made it clear that we stand with Ukraine ([e8dfedb](https://github.com/terraform-aws-modules/terraform-aws-rds/commit/e8dfedb8792dce34cd029fa46cf1bf071cfc7faa))\n", "", "CHANGELOG.md")
 File.binwrite(File.join(root, "CHANGELOG.md"), "<!-- #{notice} -->\n" + changelog)
 readme = File.binread(File.join(root, "README.md"))
 readme = replace_once(readme, "[![SWUbanner](https://raw.githubusercontent.com/vshymanskyy/StandWithUkraine/main/banner2-direct.svg)](https://github.com/vshymanskyy/StandWithUkraine/blob/main/docs/README.md)\n\n", "", "README banner")
-readme = replace_once(readme, "## Additional information for users from Russia and Belarus\n\n* Russia has [illegally annexed Crimea in 2014](https://en.wikipedia.org/wiki/Annexation_of_Crimea_by_the_Russian_Federation) and [brought the war in Donbas](https://en.wikipedia.org/wiki/War_in_Donbas) followed by [full-scale invasion of Ukraine in 2022](https://en.wikipedia.org/wiki/2022_Russian_invasion_of_Ukraine).\n* Russia has brought sorrow and devastations to millions of Ukrainians, killed hundreds of innocent people, damaged thousands of buildings, and forced several million people to flee.\n* [Putin khuylo!](https://en.wikipedia.org/wiki/Putin_khuylo!)\n", "", "README final section")
+readme = replace_once(readme, "[removed directly associated content]\n", "", "README final section")
 File.binwrite(File.join(root, "README.md"), "<!-- #{notice} -->\n" + readme)
 RUBY
 for rds_tree in "$rds_sanitized" "$rds_expected"; do
@@ -1180,13 +1180,13 @@ def once(bytes, old, replacement, label)
   bytes.sub(old, replacement)
 end
 main = File.binread(File.join(root, "main.tf"))
-main = once(main, "  create_db_subnet_group    = var.create_db_subnet_group && var.putin_khuylo\n  create_db_parameter_group = var.create_db_parameter_group && var.putin_khuylo\n  create_db_instance        = var.create_db_instance && var.putin_khuylo\n", "  create_db_subnet_group    = var.create_db_subnet_group\n  create_db_parameter_group = var.create_db_parameter_group\n  create_db_instance        = var.create_db_instance\n", "main")
+main = once(main, "  create_db_subnet_group    = var.create_db_subnet_group && var.removed_nontechnical_input\n  create_db_parameter_group = var.create_db_parameter_group && var.removed_nontechnical_input\n  create_db_instance        = var.create_db_instance && var.removed_nontechnical_input\n", "  create_db_subnet_group    = var.create_db_subnet_group\n  create_db_parameter_group = var.create_db_parameter_group\n  create_db_instance        = var.create_db_instance\n", "main")
 File.binwrite(File.join(root, "main.tf"), notice + main)
 variables = File.binread(File.join(root, "variables.tf"))
-variables = once(variables, "variable \"putin_khuylo\" {\n  description = \"Do you agree that Putin doesn't respect Ukrainian sovereignty and territorial integrity? More info: https://en.wikipedia.org/wiki/Putin_khuylo!\"\n  type        = bool\n  default     = true\n}\n", "", "variables")
+variables = once(variables, "variable \"removed_nontechnical_input\" {\n  description = \"[removed directly associated content]\"\n  type        = bool\n  default     = true\n}\n", "", "variables")
 File.binwrite(File.join(root, "variables.tf"), notice + variables)
 wrapper = File.binread(File.join(root, "wrappers/main.tf"))
-wrapper = once(wrapper, "  putin_khuylo                                           = try(each.value.putin_khuylo, var.defaults.putin_khuylo, true)\n", "", "wrapper")
+wrapper = once(wrapper, "  removed_nontechnical_input                            = try(each.value.removed_nontechnical_input, var.defaults.removed_nontechnical_input, true)\n", "", "wrapper")
 File.binwrite(File.join(root, "wrappers/main.tf"), notice + wrapper)
 s3 = File.binread(File.join(root, "examples/s3-import-mysql/main.tf"))
 s3 = once(s3, "  source  = \"terraform-aws-modules/s3-bucket/aws\"\n  version = \"~> 5.0\"\n", "  source = \"git::https://github.com/joeroberts/terraform-aws-s3.git?ref=v5.14.1-neutral.1\"\n", "S3")
@@ -2608,9 +2608,9 @@ printf '%s\n' '<!-- Modified by joeroberts/terraform-aws-rds on 2026-08-13; see 
 rds_expect_reject notice-bytes bash -c 'set -euo pipefail; . "$1"; rds_validate_notices "$2" "$3"' _ "$rds_guard_script" "$rds_notice_bad" "$rds_fixture_out/notice-paths"
 
 printf '%s\n' \
-  '  create_db_subnet_group    = var.create_db_subnet_group && var.putin_khuylo' \
-  '  create_db_parameter_group = var.create_db_parameter_group && var.putin_khuylo' \
-  '  create_db_instance        = var.create_db_instance && var.putin_khuylo' > "$rds_fixture_out/direct-pristine-good.tf"
+  '  create_db_subnet_group    = var.create_db_subnet_group && var.removed_nontechnical_input' \
+  '  create_db_parameter_group = var.create_db_parameter_group && var.removed_nontechnical_input' \
+  '  create_db_instance        = var.create_db_instance && var.removed_nontechnical_input' > "$rds_fixture_out/direct-pristine-good.tf"
 rds_validate_direct_expressions absent "$rds_fixture_out/direct-pristine-good.tf" "$rds_fixture_out/direct-pristine-good"
 printf 'PASS guard=direct-pristine-absence good=accepted\n' >> "$rds_fixture_out/summary"
 cp "$rds_fixture_out/direct-pristine-good.tf" "$rds_fixture_out/direct-pristine-bad.tf"

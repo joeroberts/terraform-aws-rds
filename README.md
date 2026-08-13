@@ -5,17 +5,17 @@ Terraform module which creates RDS resources on AWS.
 
 Root module calls these modules which can also be used separately to create independent resources:
 
-- [db_instance](https://github.com/terraform-aws-modules/terraform-aws-rds/tree/master/modules/db_instance) - creates RDS DB instance
-- [db_subnet_group](https://github.com/terraform-aws-modules/terraform-aws-rds/tree/master/modules/db_subnet_group) - creates RDS DB subnet group
-- [db_parameter_group](https://github.com/terraform-aws-modules/terraform-aws-rds/tree/master/modules/db_parameter_group) - creates RDS DB parameter group
-- [db_option_group](https://github.com/terraform-aws-modules/terraform-aws-rds/tree/master/modules/db_option_group) - creates RDS DB option group
-- [db_instance_role_association](https://github.com/terraform-aws-modules/terraform-aws-rds/tree/master/modules/db_instance_role_association) - creates RDS DB instance role association resources
+- [db_instance](https://github.com/joeroberts/terraform-aws-rds/tree/v7.2.1-neutral.1/modules/db_instance) - creates RDS DB instance
+- [db_subnet_group](https://github.com/joeroberts/terraform-aws-rds/tree/v7.2.1-neutral.1/modules/db_subnet_group) - creates RDS DB subnet group
+- [db_parameter_group](https://github.com/joeroberts/terraform-aws-rds/tree/v7.2.1-neutral.1/modules/db_parameter_group) - creates RDS DB parameter group
+- [db_option_group](https://github.com/joeroberts/terraform-aws-rds/tree/v7.2.1-neutral.1/modules/db_option_group) - creates RDS DB option group
+- [db_instance_role_association](https://github.com/joeroberts/terraform-aws-rds/tree/v7.2.1-neutral.1/modules/db_instance_role_association) - creates RDS DB instance role association resources
 
 ## Usage
 
 ```hcl
 module "db" {
-  source = "terraform-aws-modules/rds/aws"
+  source = "git::https://github.com/joeroberts/terraform-aws-rds.git?ref=v7.2.1-neutral.1"
 
   identifier = "demodb"
 
@@ -95,7 +95,7 @@ The following values are provided to toggle on/off creation of the associated re
 
 ```hcl
 module "db" {
-  source = "terraform-aws-modules/rds/aws"
+  source = "git::https://github.com/joeroberts/terraform-aws-rds.git?ref=v7.2.1-neutral.1"
 
   # Disable creation of RDS instance(s)
   create_db_instance = false
@@ -189,18 +189,18 @@ Users have the ability to:
 
 ## Examples
 
-- [Complete RDS example for MSSQL](https://github.com/terraform-aws-modules/terraform-aws-rds/tree/master/examples/complete-mssql)
-- [Complete RDS example for MySQL](https://github.com/terraform-aws-modules/terraform-aws-rds/tree/master/examples/complete-mysql)
-- [Complete RDS example for Oracle](https://github.com/terraform-aws-modules/terraform-aws-rds/tree/master/examples/complete-oracle)
-- [Complete RDS example for PostgreSQL](https://github.com/terraform-aws-modules/terraform-aws-rds/tree/master/examples/complete-postgres)
-- [Cross Region Replica example for PostgreSQL](https://github.com/terraform-aws-modules/terraform-aws-rds/tree/master/examples/cross-region-replica-postgres)
-- [Enhanced monitoring example](https://github.com/terraform-aws-modules/terraform-aws-rds/tree/master/examples/enhanced-monitoring)
-- [Parameter and Option Groups example for MySQL](https://github.com/terraform-aws-modules/terraform-aws-rds/tree/master/examples/groups)
-- [Replica RDS example for MySQL](https://github.com/terraform-aws-modules/terraform-aws-rds/tree/master/examples/replica-mysql)
-- [Replica RDS example for PostgreSQL](https://github.com/terraform-aws-modules/terraform-aws-rds/tree/master/examples/replica-postgres)
-- [Role association example for PostgreSQL](https://github.com/terraform-aws-modules/terraform-aws-rds/tree/master/examples/role-association-postgres)
-- [S3 import example for MySQL](https://github.com/terraform-aws-modules/terraform-aws-rds/tree/master/examples/s3-import-mysql)
-- [Blue/Green Deployment example for MySQL and PostgreSQL](https://github.com/terraform-aws-modules/terraform-aws-rds/tree/master/examples/blue-green-deployment)
+- [Complete RDS example for MSSQL](https://github.com/joeroberts/terraform-aws-rds/tree/v7.2.1-neutral.1/examples/complete-mssql)
+- [Complete RDS example for MySQL](https://github.com/joeroberts/terraform-aws-rds/tree/v7.2.1-neutral.1/examples/complete-mysql)
+- [Complete RDS example for Oracle](https://github.com/joeroberts/terraform-aws-rds/tree/v7.2.1-neutral.1/examples/complete-oracle)
+- [Complete RDS example for PostgreSQL](https://github.com/joeroberts/terraform-aws-rds/tree/v7.2.1-neutral.1/examples/complete-postgres)
+- [Cross Region Replica example for PostgreSQL](https://github.com/joeroberts/terraform-aws-rds/tree/v7.2.1-neutral.1/examples/cross-region-replica-postgres)
+- [Enhanced monitoring example](https://github.com/joeroberts/terraform-aws-rds/tree/v7.2.1-neutral.1/examples/enhanced-monitoring)
+- [Parameter and Option Groups example for MySQL](https://github.com/joeroberts/terraform-aws-rds/tree/v7.2.1-neutral.1/examples/groups)
+- [Replica RDS example for MySQL](https://github.com/joeroberts/terraform-aws-rds/tree/v7.2.1-neutral.1/examples/replica-mysql)
+- [Replica RDS example for PostgreSQL](https://github.com/joeroberts/terraform-aws-rds/tree/v7.2.1-neutral.1/examples/replica-postgres)
+- [Role association example for PostgreSQL](https://github.com/joeroberts/terraform-aws-rds/tree/v7.2.1-neutral.1/examples/role-association-postgres)
+- [S3 import example for MySQL](https://github.com/joeroberts/terraform-aws-rds/tree/v7.2.1-neutral.1/examples/s3-import-mysql)
+- [Blue/Green Deployment example for MySQL and PostgreSQL](https://github.com/joeroberts/terraform-aws-rds/tree/v7.2.1-neutral.1/examples/blue-green-deployment)
 
 ## Notes
 
@@ -390,9 +390,8 @@ No resources.
 
 ## Authors
 
-Module is maintained by [Anton Babenko](https://github.com/antonbabenko) with help from [these awesome contributors](https://github.com/terraform-aws-modules/terraform-aws-rds/graphs/contributors).
+This derivative is independently maintained in [joeroberts/terraform-aws-rds](https://github.com/joeroberts/terraform-aws-rds). Upstream authors and contributors remain credited through the [upstream repository](https://github.com/terraform-aws-modules/terraform-aws-rds/graphs/contributors) and Apache 2.0 license.
 
 ## License
 
-Apache 2 Licensed. See [LICENSE](https://github.com/terraform-aws-modules/terraform-aws-rds/tree/master/LICENSE) for full details.
-
+Apache 2 Licensed. See [LICENSE](https://github.com/joeroberts/terraform-aws-rds/blob/v7.2.1-neutral.1/LICENSE) for full details.
