@@ -1,0 +1,14 @@
+# RDS Neutral Derivative Planning Status
+
+- Branch: `neutral/v7.2.1-neutral.1`.
+- Approved upstream: `terraform-aws-modules/terraform-aws-rds` tag `v7.2.1`, SHA `9920097a40175c084c46fee1c306fa61cdbaf823`.
+- Authorization is resolved: delete the complete authorized political changelog bullet at pristine `CHANGELOG.md:385`; do not rewrite it.
+- The implementation plan has been comprehensively amended with fail-closed import, parity, generation, workflow, pre-commit, validation, review, PR, and campaign-journal gates.
+- Review fix round 1 closes exact-history allowlisting, fresh-run Task 4 result binding, shared production-guard fixtures, and producer-status handling; no execution task has started.
+- Review fix round 2 closes all-namespace live-ref enumeration and exact successful missing-object protocol validation while preserving every round-1 guard; no execution task has started.
+- Review fix round 3 closes exact whole-line direct-expression absence/cardinality checks after the correct Bash Task 1 retry exposed a substring false positive; the retry left the target/index clean and imported no source.
+- A fresh Task 1 attempt after round 3 completed sanitization and copied/hash-bound the exact 147 owned files, then stopped before whitespace validation or staging because `git ls-files --others --exclude-standard` correctly hid upstream-owned `examples/s3-import-mysql/backup.zip`. The preserved live state is exactly 147 owned filesystem paths, 146 visible untracked paths, that sole ignored owned path, and an empty index at planning HEAD `d2a79e5796c176fc4bf8fa6d0ded423412c13f9f`.
+- Review fix round 4 is planning-only and does not resume Task 1. It replaces the impossible untracked equality with fail-closed visible/ignored partition and byte/hash gates, permits force-add of only the proven exact ignored ZIP, and validates the complete 147-path staged set plus cached bytes/hashes.
+- Review fix round 5 is planning-only and does not resume Task 1. It accepts only the proven root `README.md` blank-at-EOF exception with exact producer status, sole diagnostic, expected bytes, and blank-only reruns before and after staging; trailing whitespace, other paths, multiple diagnostics, wrong bytes, and operational failures remain fatal.
+- No RDS pull request, reserved tag `v7.2.1-neutral.1`, or release exists. Do not create any of them while committing this planning-only amendment.
+- Any separately authorized Task 1 resumption may begin only after the exact two-document round-5 planning amendment is independently approved, normally committed, pushed, fetched, read back, and the preserved 147-file live-state fingerprint plus empty index are re-proven unchanged. Because round 5 exhausts the bounded plan-review allowance, any remaining load-bearing finding trips the breaker and requires new context rather than execution.
